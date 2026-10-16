@@ -89,7 +89,7 @@ def create_job(image: UploadFile = File(None), glb: UploadFile = File(None), bac
                left: UploadFile = File(None), right: UploadFile = File(None), options: str = Form("{}")):
     opt = json.loads(options)
     allowed = {"name", "kind", "engine", "variants", "quality", "height", "polys", "texture", "origin",
-               "crop", "rotate", "pbr", "pose", "seed", "keep_background"}
+               "crop", "rotate", "pbr", "pose", "seed", "keep_background", "delight"}
     opt = {k: v for k, v in opt.items() if k in allowed and v not in ("", None)}
     if opt.get("kind", "character") not in PRESETS or opt.get("engine", "trellis2") not in engines.ENGINES:
         raise HTTPException(400, "unknown kind or engine")

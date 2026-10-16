@@ -61,7 +61,7 @@ def list_jobs():
 
 def create(source, name=None, kind="character", engine="trellis2", variants=1, quality="standard",
            height=None, polys=None, texture=None, origin=None, crop=None, rotate=0, views=None,
-           pbr=True, pose=None, seed=None, glb=None, keep_background=False):
+           pbr=True, pose=None, seed=None, glb=None, keep_background=False, delight=True):
     """Make a job folder. `glb` imports an existing model instead of generating one."""
     p = PRESETS[kind]
     name = name or Path(source or glb).stem
@@ -81,7 +81,7 @@ def create(source, name=None, kind="character", engine="trellis2", variants=1, q
         "texture": int(texture or p["texture"]), "origin": origin or p["origin"],
         "crop": crop, "rotate": float(rotate or 0), "pbr": pbr, "pose": pose,
         "seed": int(seed if seed is not None else int(time.time()) % 100000),
-        "keep_background": keep_background,
+        "keep_background": keep_background, "delight": bool(delight),
         "status": "queued", "stage": "queued", "created": time.time(), "results": [], "prep": None, "error": None,
     }
     save(job)
@@ -120,7 +120,8 @@ def run(jid):
     job.update(status="running", error=None, results=[])
     save(job)
     try:
-        opt = {k: job[k] for k in ("polys", "texture", "quality", "pbr", "pose")}
+        opt = {k: job.get(k) for k in ("polys", "texture", "quality", "pbr", "pose")}
+        opt["delight"] = job.get("delight", True)
         if job["engine"] == "import":
             raws = [(1, d / "import.glb", {"engine": "import"})]
         else:

@@ -25,6 +25,7 @@ EDITS = {
     "utils/dehighlight_utils.py": [
         ("            torch_dtype=torch.float16,\n            safety_checker=None,", f"            torch_dtype={DT},\n            safety_checker=None,"),
         ("pipeline.to(self.device, torch.float16)", f"pipeline.to(self.device, {DT})"),
+        ("            num_inference_steps=50,", "            num_inference_steps=int(os.environ.get('HY3D_DELIGHT_STEPS', '50')),"),
     ],
     "hunyuanpaint/pipeline.py": [
         ("            ddim_timesteps=30,\n        ).to('cuda')", f"            ddim_timesteps=30,\n        ).to({DEV})"),

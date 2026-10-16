@@ -39,6 +39,7 @@ def main():
     m.add_argument("--pose", choices=["a-pose", "t-pose"], help="Meshy only")
     m.add_argument("--no-pbr", action="store_true")
     m.add_argument("--keep-background", action="store_true", help="skip cut-out (art already isolated)")
+    m.add_argument("--keep-lighting", action="store_true", help="paint with the art's own lighting (no delight)")
     m.add_argument("--seed", type=int)
 
     i = sub.add_parser("import", help="finish an existing GLB")
@@ -69,7 +70,8 @@ def main():
         views = {k: getattr(a, k) for k in ("back", "left", "right") if getattr(a, k)}
         crop = [float(x) for x in a.crop.split(",")] if a.crop else None
         job = jobs.create(a.image, engine=a.engine, variants=a.variants, quality=a.quality, crop=crop, views=views,
-                          pbr=not a.no_pbr, pose=a.pose, seed=a.seed, keep_background=a.keep_background, **common)
+                          pbr=not a.no_pbr, pose=a.pose, seed=a.seed, keep_background=a.keep_background,
+                          delight=not a.keep_lighting, **common)
     elif a.cmd == "import":
         job = jobs.create(None, glb=a.glb, **common)
     else:

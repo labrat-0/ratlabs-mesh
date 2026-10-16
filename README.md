@@ -75,6 +75,15 @@ What the setup does, and why:
 - The FlashVDM turbo VAE loads in fp16, so the driver casts the pipeline to float32 *after* enabling it.
 - The mesh is reduced to the triangle budget *before* painting, so the texture is baked onto the final topology.
 - Variants of local engines run one at a time (each needs ~16 GB RAM).
+- Delight (removing baked lighting from the art) runs 20 steps, not upstream's 50: about 2.5x faster, and
+  on RatLabs art 50 steps oversaturated toward orange and invented coloured goggle lenses.
+
+Where the ~27 minutes go (goblin, CPU): shape 6–7 min; paint 19 min = multi-view diffusion 13 min, delight
+5 min (2 min at 20 steps), bake + inpaint 1 min, UV + renders 12 s.
+
+**Remove baked lighting** (UI checkbox, `--keep-lighting` to turn off) mirrors Meshy's `remove_lighting`.
+On gives an evenly lit texture that relights well in a game. Off keeps the art's own dark, moody colour,
+which is often closer to RatLabs art, and skips delight.
 
 Weights (~22 GB) live in `~/.cache/huggingface`. License: Tencent Hunyuan 3D 2.0 Community License:
 commercial use allowed under 1M monthly users, **not licensed in the EU, UK or South Korea**. Check it

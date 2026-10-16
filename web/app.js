@@ -104,7 +104,7 @@ $('#go').onclick = async () => {
   fd.append('options', JSON.stringify({
     name: $('#name').value || undefined, kind, engine: $('#engine').value, quality: $('#quality').value, variants: +$('#variants').value,
     height: +$('#height').value, polys: +$('#polys').value, texture: +$('#texture').value, origin: $('#origin').value,
-    pose: $('#pose').value || undefined, pbr: $('#pbr').checked, keep_background: $('#keepBg').checked, crop,
+    pose: $('#pose').value || undefined, pbr: $('#pbr').checked, delight: $('#delight').checked, keep_background: $('#keepBg').checked, crop,
   }));
   $('#go').disabled = true;
   try { const job = await api('/api/jobs', { method: 'POST', body: fd }); await refreshLibrary(); openJob(job.id); }

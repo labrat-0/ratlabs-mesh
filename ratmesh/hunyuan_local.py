@@ -20,6 +20,8 @@ ap.add_argument("--octree", type=int, default=256)
 ap.add_argument("--faces", type=int, default=30000)
 ap.add_argument("--seed", type=int, default=1234)
 ap.add_argument("--no-texture", action="store_true")
+ap.add_argument("--keep-lighting", action="store_true", help="paint from the art as lit, skip delighting")
+ap.add_argument("--delight-steps", type=int, default=20)
 ap.add_argument("--threads", type=int, default=max(2, (os.cpu_count() or 4) - 2))
 for side in ("back", "left", "right"):
     ap.add_argument("--" + side, type=Path)
@@ -35,6 +37,8 @@ stage("loading")
 os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 os.environ.setdefault("HY3D_DEVICE", "cpu")
 os.environ.setdefault("HY3D_DTYPE", "float32")
+# Upstream runs 50; 20 is ~2.5x faster and stays closer to the art (50 oversaturates).
+os.environ["HY3D_DELIGHT_STEPS"] = str(a.delight_steps)
 sys.path.insert(0, str(a.engine))
 import torch
 from PIL import Image
@@ -72,6 +76,12 @@ if not a.no_texture:
     from hy3dgen.texgen import Hunyuan3DPaintPipeline
     stage("loading paint")
     paint = Hunyuan3DPaintPipeline.from_pretrained("tencent/Hunyuan3D-2", subfolder="hunyuan3d-paint-v2-0-turbo")
+    if a.keep_lighting:
+        # Same output format as the delight model: RGB flattened on white.
+        def flat(im):
+            bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
+            return Image.alpha_composite(bg, im.convert("RGBA")).convert("RGB")
+        paint.models["delight_model"] = flat
     stage("painting", faces=len(mesh.faces))
     mesh = paint(mesh, image=[front, *views.values()])
 

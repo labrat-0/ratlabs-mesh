@@ -118,6 +118,7 @@ def meshy(img, out, opt, log):
         "enable_pbr": bool(opt.get("pbr", True)),
         "texture_resolution": "4k" if int(opt["texture"]) >= 4096 else "2k",
         "target_formats": ["glb"],
+        "remove_lighting": bool(opt.get("delight", True)),
     }
     if opt.get("pose"):
         body["pose_mode"] = opt["pose"]
@@ -190,6 +191,8 @@ def hunyuan_local(img, out, opt, log):
            "--model", model, "--octree", str(octree), "--faces", str(int(opt["polys"])), "--seed", str(int(opt.get("seed", 0)))]
     for side, path in opt.get("views", {}).items():
         cmd += ["--" + side, str(path)]
+    if not opt.get("delight", True):
+        cmd.append("--keep-lighting")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     tail = []
     for line in p.stdout:
