@@ -18,6 +18,10 @@ def mock(monkeypatch, tmp_path):
     def handler(req):
         calls.append((req.method, str(req.url), req.headers.get("authorization"), req.content))
         u = str(req.url)
+        if "storage/upload/initiate" in u:
+            return httpx.Response(200, json={"upload_url": "https://up/put", "file_url": "https://cdn/in.png"})
+        if u == "https://up/put":
+            return httpx.Response(200)
         if req.method == "POST" and "queue.fal.run" in u:
             return httpx.Response(200, json={"request_id": "r1", "status_url": "https://queue.fal.run/x/requests/r1/status", "response_url": "https://queue.fal.run/x/requests/r1"})
         if u.startswith("https://queue.fal.run/x/requests/r1/status"):
@@ -47,9 +51,11 @@ OPT = {"polys": 30000, "texture": 2048, "quality": "standard", "pbr": True, "see
 def test_trellis2(mock):
     calls, tmp = mock
     meta = engines.trellis2(IMG, tmp / "o.glb", OPT, lambda m: None)
-    body = json.loads(calls[0][3])
-    assert calls[0][1] == "https://queue.fal.run/fal-ai/trellis-2" and calls[0][2] == "Key fk"
-    assert body["image_url"].startswith("data:image/png;base64,") and body["resolution"] == "1024"
+    sub = next(c for c in calls if "queue.fal.run" in c[1])
+    body = json.loads(sub[3])
+    assert sub[1] == "https://queue.fal.run/fal-ai/trellis-2" and sub[2] == "Key fk"
+    assert calls[1][1] == "https://up/put" and calls[1][3] == IMG.read_bytes()
+    assert body["image_url"] == "https://cdn/in.png" and body["resolution"] == "1024"
     assert body["decimation_target"] == 30000 and body["texture_size"] == "2048" and body["seed"] == 7
     assert (tmp / "o.glb").read_text() == "https://cdn/model.glb" and meta["engine"] == "trellis2"
 
@@ -57,8 +63,8 @@ def test_trellis2(mock):
 def test_hunyuan3_views(mock):
     calls, tmp = mock
     engines.hunyuan3(IMG, tmp / "o.glb", dict(OPT, views={"back": str(IMG)}), lambda m: None)
-    body = json.loads(calls[0][3])
-    assert "back_image_url" in body and "left_image_url" not in body and body["face_count"] == 40000
+    body = json.loads(next(c for c in calls if "queue.fal.run" in c[1])[3])
+    assert "back_image_url" in body and "left_image_url" not in body and "face_count" not in body
 
 
 def test_meshy_single_and_multi(mock):

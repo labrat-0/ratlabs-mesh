@@ -48,6 +48,23 @@ def _need(key):
 
 # ---------- fal.ai queue ----------
 
+def fal_url(path):
+    """Upload an image to fal's CDN and return its URL. Some fal models (Hunyuan3D v3)
+    hand the image to another provider that cannot read data: URIs."""
+    headers = {"Authorization": "Key " + _need("FAL_KEY")}
+    with httpx.Client(timeout=120, headers=headers) as c:
+        r = c.post("https://rest.alpha.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3",
+                   json={"content_type": "image/png", "file_name": Path(path).name})
+        if r.status_code >= 400:
+            raise EngineError(f"fal upload {r.status_code}: {r.text[:400]}")
+        j = r.json()
+    with httpx.Client(timeout=300) as c:
+        u = c.put(j["upload_url"], content=Path(path).read_bytes(), headers={"Content-Type": "image/png"})
+        if u.status_code >= 400:
+            raise EngineError(f"fal upload {u.status_code}: {u.text[:400]}")
+    return j["file_url"]
+
+
 def _fal(endpoint, payload, log, poll=3):
     headers = {"Authorization": "Key " + _need("FAL_KEY")}
     with httpx.Client(timeout=120, headers=headers) as c:
@@ -77,7 +94,7 @@ def _fal(endpoint, payload, log, poll=3):
 def trellis2(img, out, opt, log):
     res = QUALITY[opt.get("quality", "standard")]
     payload = {
-        "image_url": data_uri(img),
+        "image_url": fal_url(img),
         "resolution": str(res),
         "seed": int(opt.get("seed", 0)),
         # TRELLIS bakes the texture after decimating, which beats decimating a baked mesh.
@@ -95,14 +112,15 @@ def trellis2(img, out, opt, log):
 
 def hunyuan3(img, out, opt, log):
     payload = {
-        "input_image_url": data_uri(img),
+        "input_image_url": fal_url(img),
         "enable_pbr": bool(opt.get("pbr", True)),
-        "face_count": max(40000, int(opt["polys"])),
+        # face_count is billed as an extra; the default 500k mesh is what we want anyway,
+        # since the finisher decimates and bakes the surplus detail into a normal map.
         "generate_type": "Normal",
     }
     for side in ("back", "left", "right"):
         if opt.get("views", {}).get(side):
-            payload[f"{side}_image_url"] = data_uri(opt["views"][side])
+            payload[f"{side}_image_url"] = fal_url(opt["views"][side])
     r = _fal("fal-ai/hunyuan3d-v3/image-to-3d", payload, log)
     download((r.get("model_glb") or r["model_urls"]["glb"])["url"], out)
     return {"engine": "hunyuan3", "host": "fal.ai", "views": sorted(opt.get("views", {}))}
@@ -221,8 +239,8 @@ def hunyuan_local(img, out, opt, log):
 
 
 ENGINES = {
+    "hunyuan3": {"run": hunyuan3, "label": "Hunyuan3D v3 (fal.ai)", "key": "FAL_KEY", "cost": "~$0.38, +$0.15 with PBR; best faces", "multiview": True},
     "trellis2": {"run": trellis2, "label": "TRELLIS.2 (fal.ai)", "key": "FAL_KEY", "cost": "~$0.25–0.35", "multiview": False},
-    "hunyuan3": {"run": hunyuan3, "label": "Hunyuan3D v3 (fal.ai)", "key": "FAL_KEY", "cost": "see fal.ai", "multiview": True},
     "meshy": {"run": meshy, "label": "Meshy (latest)", "key": "MESHY_API_KEY", "cost": "Meshy credits", "multiview": True},
     "trellis2-hf": {"run": trellis2_hf, "label": "TRELLIS.2 (HF Space)", "key": "HF_TOKEN", "cost": "HF GPU quota", "multiview": False},
     "hunyuan-local": {"run": hunyuan_local, "label": "Hunyuan3D-2 (local CPU)", "key": None, "cost": "free, ~25 min on this CPU", "multiview": True, "needs": HUNYUAN},

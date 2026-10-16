@@ -10,6 +10,7 @@ jobs/<id>/
   v1/renders/*.png    front / three_quarter / side / back
 """
 import json
+import struct
 import re
 import shutil
 import subprocess
@@ -96,6 +97,19 @@ def _log(job, msg):
     save(job)
 
 
+def glb_tris(path):
+    """Triangle count from a GLB's JSON chunk, without loading the mesh."""
+    try:
+        b = Path(path).read_bytes()
+        n = struct.unpack("<I", b[12:16])[0]
+        j = json.loads(b[20:20 + n])
+        acc = j["accessors"]
+        return sum((acc[p["indices"]]["count"] if "indices" in p else acc[p["attributes"]["POSITION"]]["count"]) // 3
+                   for m in j["meshes"] for p in m["primitives"])
+    except Exception:
+        return 0
+
+
 def finish(raw, out, job, renders):
     spec = {"in": str(raw), "out": str(out), "height": job["height"], "polys": job["polys"],
             "texture": job["texture"], "origin": job["origin"], "rotate": job["rotate"],
@@ -103,6 +117,9 @@ def finish(raw, out, job, renders):
     hipoly = Path(raw).parent / "work" / "hipoly.glb"
     if hipoly.exists():
         spec["hipoly"] = str(hipoly)
+    elif glb_tris(raw) > 3 * int(job["polys"]):
+        # Remote engines return dense meshes; bake what decimation removes into a normal map.
+        spec["hipoly"] = str(raw)
     sp = out.with_suffix(".spec.json")
     sp.write_text(json.dumps(spec))
     r = subprocess.run([BLENDER, "-b", "--python", str(ROOT / "ratmesh/finish_blender.py"), "--", str(sp)],
