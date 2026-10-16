@@ -6,6 +6,7 @@ spec: {"in", "out", "height", "polys", "texture", "origin": "bottom"|"center",
        "rotate": degrees about up, "renders": dir or null, "stats": path}
 """
 import bpy, bmesh, json, math, sys
+import numpy as np
 from mathutils import Matrix, Vector
 from mathutils.kdtree import KDTree
 
@@ -125,6 +126,37 @@ mn, mx = bounds()
 stats["dimensions_m"] = [round(x, 4) for x in (mx - mn)]
 
 # --- materials and textures ---
+def _filt(a, r, op):
+    """Separable square min/max filter of radius r (numpy only; Blender has no scipy)."""
+    for axis in (0, 1):
+        p = np.pad(a, [(r, r) if i == axis else (0, 0) for i in range(2)], mode="edge")
+        n = a.shape[axis]
+        out = p.take(range(0, n), axis=axis)
+        for k in range(1, 2 * r + 1):
+            out = op(out, p.take(range(k, k + n), axis=axis))
+        a = out
+    return a
+
+
+def clean_metal_rough(im, r=3):
+    """Generated PBR maps sprinkle metal/gloss specks over cloth and skin, which render
+    as white glitter. Keep only metal regions wider than ~2r+1 texels and give
+    non-metal a sane minimum roughness."""
+    w, h = im.size
+    px = np.empty(w * h * 4, dtype=np.float32)
+    im.pixels.foreach_get(px)
+    px = px.reshape(h, w, 4)
+    metal = px[..., 2]
+    opened = _filt(_filt(metal, r, np.minimum), r, np.maximum)
+    rough = np.where(opened < 0.5, np.maximum(px[..., 1], 0.45), px[..., 1])
+    before = float((metal > 0.5).mean())
+    px[..., 2], px[..., 1] = opened, rough
+    im.pixels.foreach_set(px.ravel())
+    im.update()
+    im.pack()
+    return {"metal_before": round(before, 3), "metal_after": round(float((opened > 0.5).mean()), 3)}
+
+
 tex = int(spec["texture"])
 has_alpha = False
 stats["textures"] = []
@@ -149,6 +181,8 @@ for mat in me.materials:
             w, h = im.size
             if max(w, h) > tex:
                 im.scale(int(w * tex / max(w, h)), int(h * tex / max(w, h)))
+            if "METALLIC" in (n.label or "").upper():
+                stats["pbr_cleaned"] = clean_metal_rough(im)
             stats["textures"].append([n.label or im.name, list(im.size)])
 if not me.materials or not any(me.materials):
     # Vertex-coloured input (TripoSR): show the colours through a real material.

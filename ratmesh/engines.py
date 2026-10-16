@@ -81,8 +81,10 @@ def trellis2(img, out, opt, log):
         "resolution": str(res),
         "seed": int(opt.get("seed", 0)),
         # TRELLIS bakes the texture after decimating, which beats decimating a baked mesh.
-        # Its target counts vertices; a closed mesh has about half as many vertices as triangles.
-        "decimation_target": max(10000, int(opt["polys"]) // 2),
+        # Its target counts vertices, but ragged cloth and many parts give well under 2 tris
+        # per vertex (15k verts came back as 13.7k tris), so ask for the full budget and let
+        # the finisher trim.
+        "decimation_target": max(20000, int(opt["polys"])),
         "texture_size": str(min(4096, max(1024, int(opt["texture"])))),
         "remesh": True,
     }
