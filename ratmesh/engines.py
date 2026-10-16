@@ -5,6 +5,7 @@ No GPU on this machine, so every high-quality engine runs remotely:
   hunyuan3   Tencent Hunyuan3D v3 on fal.ai; takes back/left/right  FAL_KEY
   meshy      Meshy's own API (meshy-7.1 / latest)                   MESHY_API_KEY
   trellis2-hf  TRELLIS.2 on the official Hugging Face Space        HF_TOKEN (PRO quota)
+  hunyuan-local  Tencent Hunyuan3D-2 shape + paint on this CPU. Free, offline, minutes per model.
   triposr    TripoSR on this CPU. Free and offline, coarse: drafts only.
 """
 import base64
@@ -15,7 +16,7 @@ from pathlib import Path
 
 import httpx
 
-from .config import ROOT, TRIPOSR, load_keys
+from .config import HUNYUAN, ROOT, TRIPOSR, load_keys
 
 QUALITY = {"draft": 512, "standard": 1024, "high": 1536}
 
@@ -179,16 +180,44 @@ def triposr(img, out, opt, log):
     return {"engine": "triposr", "host": "local-cpu", "resolution": res}
 
 
+def hunyuan_local(img, out, opt, log):
+    py = HUNYUAN / ".venv/bin/python"
+    if not py.exists():
+        raise EngineError(f"Hunyuan3D-2 not installed at {HUNYUAN}; run local/setup_hunyuan.sh")
+    q = opt.get("quality", "standard")
+    model, octree = {"draft": ("mini", 192), "standard": ("mini", 256), "high": ("full", 320)}[q]
+    cmd = [str(py), "-I", str(ROOT / "ratmesh/hunyuan_local.py"), str(img), str(out), "--engine", str(HUNYUAN),
+           "--model", model, "--octree", str(octree), "--faces", str(int(opt["polys"])), "--seed", str(int(opt.get("seed", 0)))]
+    for side, path in opt.get("views", {}).items():
+        cmd += ["--" + side, str(path)]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    tail = []
+    for line in p.stdout:
+        tail = (tail + [line.rstrip()])[-25:]
+        if line.startswith("{"):
+            st = json.loads(line)
+            log(f"hunyuan {st['stage']} ({st['t']:.0f}s)")
+    if p.wait():
+        raise EngineError("Hunyuan3D local failed:\n" + "\n".join(tail))
+    return {"engine": "hunyuan-local", "host": "local-cpu", "model": model, "octree": octree, "views": sorted(opt.get("views", {}))}
+
+
 ENGINES = {
     "trellis2": {"run": trellis2, "label": "TRELLIS.2 (fal.ai)", "key": "FAL_KEY", "cost": "~$0.25–0.35", "multiview": False},
     "hunyuan3": {"run": hunyuan3, "label": "Hunyuan3D v3 (fal.ai)", "key": "FAL_KEY", "cost": "see fal.ai", "multiview": True},
     "meshy": {"run": meshy, "label": "Meshy (latest)", "key": "MESHY_API_KEY", "cost": "Meshy credits", "multiview": True},
     "trellis2-hf": {"run": trellis2_hf, "label": "TRELLIS.2 (HF Space)", "key": "HF_TOKEN", "cost": "HF GPU quota", "multiview": False},
-    "triposr": {"run": triposr, "label": "TripoSR (local CPU draft)", "key": None, "cost": "free", "multiview": False},
+    "hunyuan-local": {"run": hunyuan_local, "label": "Hunyuan3D-2 (local CPU)", "key": None, "cost": "free, ~10–25 min", "multiview": True, "needs": HUNYUAN},
+    "triposr": {"run": triposr, "label": "TripoSR (local CPU draft)", "key": None, "cost": "free", "multiview": False, "needs": TRIPOSR},
 }
 
 
 def available():
     keys = load_keys()
-    return {k: {**{x: v for x, v in e.items() if x != "run"}, "ready": e["key"] is None and (TRIPOSR / ".venv/bin/python").exists() or bool(keys.get(e["key"] or ""))}
-            for k, e in ENGINES.items()}
+
+    def ready(e):
+        if e["key"] is None:
+            return (e["needs"] / ".venv/bin/python").exists()
+        return bool(keys.get(e["key"]))
+
+    return {k: {**{x: v for x, v in e.items() if x not in ("run", "needs")}, "ready": ready(e)} for k, e in ENGINES.items()}

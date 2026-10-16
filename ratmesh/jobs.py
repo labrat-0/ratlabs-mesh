@@ -150,7 +150,9 @@ def run(jid):
                 return i, vd / "raw.glb", meta
 
             _log(job, f"generate: {job['engine']} x{job['variants']}")
-            with ThreadPoolExecutor(job["variants"]) as ex:
+            # Local engines saturate the CPU and need GBs of RAM each: one variant at a time.
+            workers = 1 if engines.ENGINES[job["engine"]]["key"] is None else job["variants"]
+            with ThreadPoolExecutor(workers) as ex:
                 raws = sorted(ex.map(gen, range(1, job["variants"] + 1)))
         for i, raw, meta in raws:
             vd = d / f"v{i}"

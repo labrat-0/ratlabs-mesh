@@ -7,6 +7,7 @@ JOBS = Path(os.environ.get("RATMESH_JOBS", ROOT / "jobs"))
 KEYS_FILE = Path.home() / ".config/ratlabs-mesh/keys.env"
 BLENDER = os.environ.get("RATMESH_BLENDER", "blender")
 TRIPOSR = Path(os.environ.get("RATMESH_TRIPOSR", Path.home() / "tools/TripoSR"))
+HUNYUAN = Path(os.environ.get("RATMESH_HUNYUAN", Path.home() / "tools/Hunyuan3D-2"))
 
 # What a finished asset should look like, per kind. The three reference GLBs
 # (rat 0.1 m, goblin 1.2 m, labrat 1.7 m) are ~30k triangles with one 2K texture.

@@ -27,6 +27,8 @@ function engineChanged() {
   const e = cfg.engines[$('#engine').value];
   $('#engineNote').textContent = `${e.cost}${e.multiview ? ' · accepts back/left/right views' : ''}${$('#engine').value === 'triposr' ? ' · offline preview quality, not final' : ''}`;
   $('#views').hidden = !e.multiview;
+  // Local engines take minutes per variant; start at one.
+  if (!e.key) $('#variants').value = '1';
 }
 $('#kinds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; kind = b.dataset.kind; [...$('#kinds').children].forEach(x => x.classList.toggle('on', x === b)); applyPreset(); });
 $('#engine').addEventListener('change', engineChanged);
@@ -132,7 +134,9 @@ async function openJob(id) {
   $('#detail').hidden = false; $('#empty').hidden = true;
   $('#log').textContent = job.log.join('\n'); $('#log').scrollTop = 1e9;
   const busy = job.status === 'running' || job.status === 'queued';
-  $('#progress').hidden = !busy; $('#progressText').textContent = job.stage;
+  $('#progress').hidden = !busy;
+  const mins = Math.floor((Date.now() / 1000 - job.created) / 60);
+  $('#progressText').textContent = job.status === 'queued' ? 'queued' : `${job.stage} · ${mins} min elapsed`;
   $('#variantTabs').innerHTML = job.results.length > 1 ? job.results.map(r => `<button data-v="${r.variant}" class="${r.variant === variant ? 'on' : ''}">v${r.variant}</button>`).join('') : '';
   if (!job.results.find(r => r.variant === variant)) variant = job.results[0]?.variant || 1;
   if (fresh) showVariant();

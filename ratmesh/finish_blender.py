@@ -6,7 +6,7 @@ spec: {"in", "out", "height", "polys", "texture", "origin": "bottom"|"center",
        "rotate": degrees about up, "renders": dir or null, "stats": path}
 """
 import bpy, bmesh, json, math, sys
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 spec = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 stats = {"warnings": []}
@@ -194,12 +194,19 @@ if spec.get("renders"):
         L.data.energy = energy
         L.data.color = color
         sc.collection.objects.link(L)
-        L.location = ctr + Vector(loc) * ext
-        L.rotation_euler = (ctr - L.location).to_track_quat("-Z", "Y").to_euler()
         if kind == "AREA":
             L.data.size = ext * 1.2
+        rig.append((L, Vector(loc)))
         return L
 
+    def aim_lights(angle):
+        # The rig turns with the camera so every view gets the same studio lighting.
+        rot = Matrix.Rotation(angle, 3, "Z")
+        for L, loc in rig:
+            L.location = ctr + (rot @ loc) * ext
+            L.rotation_euler = (ctr - L.location).to_track_quat("-Z", "Y").to_euler()
+
+    rig = []
     k = ext * ext
     light("key", "AREA", 85 * k, (1, 0.96, 0.9), (-1.2, -2.0, 1.6))
     light("fill", "AREA", 32 * k, (0.85, 0.9, 1), (1.8, -1.4, 0.4))
@@ -218,6 +225,7 @@ if spec.get("renders"):
         d = Vector((math.sin(a), -math.cos(a), el)).normalized()
         cam.location = ctr + d * ext * 4
         cam.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
+        aim_lights(a)
         sc.render.filepath = os.path.join(spec["renders"], name + ".png")
         bpy.ops.render.render(write_still=True)
 

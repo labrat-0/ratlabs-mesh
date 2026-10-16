@@ -21,7 +21,7 @@ Meshy's image-to-3D is a chain of stages. RatLabs Mesh runs the same chain:
 | Stage | Meshy | RatLabs Mesh | Where |
 |---|---|---|---|
 | 1. Prep | image enhancement, implicit cut-out | BiRefNet cut-out, crop box for scene art, speck removal, centred 1024² square with 8% margin, quality notes | local CPU (`ratmesh/prep.py`) |
-| 2. Generate | Meshy 6/7 diffusion model | TRELLIS.2 / Hunyuan3D v3 / Meshy itself, 1–4 seed variants in parallel | remote GPU (`ratmesh/engines.py`) |
+| 2. Generate | Meshy 6/7 diffusion model | Hunyuan3D-2 shape + multi-view paint locally, or TRELLIS.2 / Hunyuan3D v3 / Meshy remotely; 1–4 seed variants | this CPU or a remote GPU (`ratmesh/engines.py`) |
 | 3. Remesh | `should_remesh`, `target_polycount` | weld, drop floaters, collapse-decimate to the triangle budget, smooth-by-angle normals | Blender (`ratmesh/finish_blender.py`) |
 | 4. Size | `auto_size`, `origin_at` | real-world height per kind, feet-at-origin or centred pivot | Blender |
 | 5. Materials | PBR maps, `remove_lighting` | keeps PBR maps, fixes glTF's chrome default (metallic 1 → 0, roughness 1 → 0.8), caps texture size, JPEG-packed | Blender |
@@ -47,18 +47,42 @@ the stored raw GLB without spending GPU money.
 
 ## Engines
 
-This machine has Intel integrated graphics, and every model good enough to
-match the references needs a 16–24 GB NVIDIA GPU. So stage 2 is remote:
-
-| engine | model | key | notes |
+| engine | model | needs | notes |
 |---|---|---|---|
-| `trellis2` (default) | Microsoft TRELLIS.2, MIT license | `FAL_KEY` | best open model; bakes texture after decimating; ~$0.25–0.35 per model on fal.ai |
+| `hunyuan-local` | Tencent Hunyuan3D-2 shape + Paint, **on this CPU** | `local/setup_hunyuan.sh` | free and offline. Shape ~6 min, paint ~20 min (about 27 min a model). Real painted backs, ~30k tris, 2K texture. Multi-view shape model when back/left/right art is given |
+| `trellis2` | Microsoft TRELLIS.2, MIT license | `FAL_KEY` | best open model; bakes texture after decimating; ~$0.25–0.35 per model on fal.ai; about a minute |
 | `hunyuan3` | Tencent Hunyuan3D v3 | `FAL_KEY` | accepts back/left/right views: use for turnarounds |
 | `meshy` | Meshy latest | `MESHY_API_KEY` | the reference quality; multi-image when views are given; `--pose a-pose` |
 | `trellis2-hf` | TRELLIS.2 official HF Space | `HF_TOKEN` | needs HF PRO: the free tier caps a job at well under the 270 s it asks for |
-| `triposr` | TripoSR on this CPU | none | free, offline, ~90 s. Coarse vertex-colour drafts for checking a cut-out and pose; never final |
+| `triposr` | TripoSR on this CPU | `~/tools/TripoSR` | ~90 s coarse vertex-colour drafts for checking a cut-out and pose; never final |
 
-Keys go in `~/.config/ratlabs-mesh/keys.env` (mode 600) or through **Keys** in the UI:
+### The local engine
+
+This machine has Intel integrated graphics, no NVIDIA GPU. TRELLIS.2 needs NVIDIA-only kernels, but
+Hunyuan3D-2 is plain PyTorch apart from one texture rasterizer that has an upstream CPU path:
+
+```sh
+./local/setup_hunyuan.sh            # clone to ~/tools/Hunyuan3D-2, pinned venv, CPU rasterizer, patch
+./ratmesh.sh make art.png --engine hunyuan-local                 # ~27 min
+./ratmesh.sh make art.png --engine hunyuan-local --quality high  # full 1.1B shape model, slower
+```
+
+What the setup does, and why:
+- `transformers<5`: version 5 renames DINOv2 weights and the shape checkpoint stops loading.
+- `local/custom_rasterizer_cpu/`: builds the rasterizer as a C++ extension with the CUDA kernel stubbed out.
+- `local/patch_hunyuan.py`: replaces hard-coded `'cuda'` and fp16 with `HY3D_DEVICE` / `HY3D_DTYPE`
+  (default cpu / float32, because this CPU has no fast fp16). Idempotent; asserts every edit.
+- The FlashVDM turbo VAE loads in fp16, so the driver casts the pipeline to float32 *after* enabling it.
+- The mesh is reduced to the triangle budget *before* painting, so the texture is baked onto the final topology.
+- Variants of local engines run one at a time (each needs ~16 GB RAM).
+
+Weights (~22 GB) live in `~/.cache/huggingface`. License: Tencent Hunyuan 3D 2.0 Community License:
+commercial use allowed under 1M monthly users, **not licensed in the EU, UK or South Korea**. Check it
+before RatLabs Mesh goes public.
+
+Speed-up not yet taken: `sudo pacman -S intel-compute-runtime` enables PyTorch on the Arc iGPU (XPU).
+
+Keys for the remote engines go in `~/.config/ratlabs-mesh/keys.env` (mode 600) or through **Keys** in the UI:
 
 ```
 FAL_KEY=...
@@ -66,7 +90,7 @@ MESHY_API_KEY=...
 HF_TOKEN=...
 ```
 
-Engine requests send the prepared cut-out to that provider.
+Remote engine requests send the prepared cut-out to that provider. `hunyuan-local` sends nothing anywhere.
 
 ## Getting a perfect character
 
@@ -80,7 +104,8 @@ Engine requests send the prepared cut-out to that provider.
 ## Layout
 
 ```
-ratmesh/        config, prep, engines, finish_blender, jobs, cli, server, triposr_cpu
+ratmesh/        config, prep, engines, finish_blender, jobs, cli, server, hunyuan_local, triposr_cpu
+local/          setup + CPU patch for the local Hunyuan3D-2 engine
 web/            studio UI (three.js r160 vendored)
 samples/input/  RatLabs art used for testing
 jobs/<id>/      per-job output (git-ignored): source, prep.png, v1/raw.glb, v1/<name>.glb, v1/renders/
@@ -90,5 +115,6 @@ jobs/<id>/      per-job output (git-ignored): source, prep.png, v1/raw.glb, v1/<
 
 - Auto-rig stage: generalise `ratlabs-underground/tools/mesh-engine/rig-meshy.py`
   (humanoid) and `rig-rat.py` (quadruped), or call Meshy's rigging API.
-- Self-hosted TRELLIS.2 worker (RunPod or Modal serverless) to drop per-model fees.
+- Intel XPU (Arc iGPU) for the local engine, once `intel-compute-runtime` is installed.
+- A persistent local worker so the ~1 min model load happens once, not per job.
 - A "Send to game" button that writes into `ratlabs-underground/assets/models/`.
