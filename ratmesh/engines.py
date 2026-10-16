@@ -9,6 +9,7 @@ No GPU on this machine, so every high-quality engine runs remotely:
   triposr    TripoSR on this CPU. Free and offline, coarse: drafts only.
 """
 import base64
+import fcntl
 import json
 import subprocess
 import time
@@ -19,6 +20,7 @@ import httpx
 from .config import HUNYUAN, ROOT, TRIPOSR, load_keys
 
 QUALITY = {"draft": 512, "standard": 1024, "high": 1536}
+LOCAL_LOCK = Path.home() / ".cache/ratlabs-mesh-local.lock"
 
 
 class EngineError(RuntimeError):
@@ -194,15 +196,23 @@ def hunyuan_local(img, out, opt, log):
         cmd += ["--" + side, str(path)]
     if not opt.get("delight", True):
         cmd.append("--keep-lighting")
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    tail = []
-    for line in p.stdout:
-        tail = (tail + [line.rstrip()])[-25:]
-        if line.startswith("{"):
-            st = json.loads(line)
-            log(f"hunyuan {st['stage']} ({st['t']:.0f}s)")
-    if p.wait():
-        raise EngineError("Hunyuan3D local failed:\n" + "\n".join(tail))
+    # One local job per machine: each needs ~16 GB, and two at once exhaust 30 GB of RAM.
+    # A file lock covers studio jobs and CLI jobs alike.
+    with open(LOCAL_LOCK, "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            log("waiting for another local job to finish")
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        tail = []
+        for line in p.stdout:
+            tail = (tail + [line.rstrip()])[-25:]
+            if line.startswith("{"):
+                st = json.loads(line)
+                log(f"hunyuan {st['stage']} ({st['t']:.0f}s)")
+        if p.wait():
+            raise EngineError("Hunyuan3D local failed:\n" + "\n".join(tail))
     return {"engine": "hunyuan-local", "host": "local-cpu", "model": model, "octree": octree, "views": sorted(opt.get("views", {}))}
 
 
