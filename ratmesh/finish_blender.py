@@ -7,6 +7,7 @@ spec: {"in", "out", "height", "polys", "texture", "origin": "bottom"|"center",
 """
 import bpy, bmesh, json, math, sys
 from mathutils import Matrix, Vector
+from mathutils.kdtree import KDTree
 
 spec = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 stats = {"warnings": []}
@@ -61,12 +62,23 @@ for f in bm.faces:
                     stack.append(h)
     parts.append(comp)
 total = len(bm.faces)
+parts.sort(key=len, reverse=True)
+main_verts = {v for f in parts[0] for v in f.verts}
+tree = KDTree(len(main_verts))
+for i, v in enumerate(main_verts):
+    tree.insert(v.co, i)
+tree.balance()
 drop, dropped = [], 0
-for comp in parts:
-    vs = {v for f in comp for v in f.verts}
+for comp in parts[1:]:
+    vs = list({v for f in comp for v in f.verts})
     lo = Vector([min(v.co[i] for v in vs) for i in range(3)])
     hi = Vector([max(v.co[i] for v in vs) for i in range(3)])
-    if len(comp) < total * 0.002 and (hi - lo).length < diag * 0.03:
+    speck = len(comp) < total * 0.002 and (hi - lo).length < diag * 0.03
+    # Generators leave flakes hovering beside the body. Real separate pieces
+    # (boots, goggles, a held prop) touch or cut into it; flakes keep a gap.
+    gap = min(tree.find(v.co)[2] for v in vs[:: max(1, len(vs) // 400)])
+    flake = gap > diag * 0.015 and len(comp) < len(parts[0]) * 0.25
+    if speck or flake:
         drop.extend(comp)
         dropped += 1
 if drop:
