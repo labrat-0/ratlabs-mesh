@@ -63,8 +63,8 @@ Hunyuan3D-2 is plain PyTorch apart from one texture rasterizer that has an upstr
 
 ```sh
 ./local/setup_hunyuan.sh            # clone to ~/tools/Hunyuan3D-2, pinned venv, CPU rasterizer, patch
-./ratmesh.sh make art.png --engine hunyuan-local                 # ~27 min
-./ratmesh.sh make art.png --engine hunyuan-local --quality high  # full 1.1B shape model, slower
+./ratmesh.sh make art.png --engine hunyuan-local                  # ~25 min
+./ratmesh.sh make art.png --engine hunyuan-local --quality draft  # 0.6B mini shape model
 ```
 
 What the setup does, and why:
@@ -74,6 +74,9 @@ What the setup does, and why:
   (default cpu / float32, because this CPU has no fast fp16). Idempotent; asserts every edit.
 - The FlashVDM turbo VAE loads in fp16, so the driver casts the pipeline to float32 *after* enabling it.
 - The mesh is reduced to the triangle budget *before* painting, so the texture is baked onto the final topology.
+- Quality: `draft` = 0.6B mini model at octree 256; `standard` = 1.1B model at 320, which keeps fur strands
+  and whiskers the mini loses (rat test) in about the same shape time (~7.5 min); `high` = 1.1B at 380,
+  upstream's setting, not yet timed on this CPU.
 - Variants of local engines run one at a time (each needs ~16 GB RAM).
 - Delight (removing baked lighting from the art) runs 20 steps, not upstream's 50: about 2.5x faster, and
   on RatLabs art 50 steps oversaturated toward orange and invented coloured goggle lenses.

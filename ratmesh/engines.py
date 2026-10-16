@@ -186,7 +186,8 @@ def hunyuan_local(img, out, opt, log):
     if not py.exists():
         raise EngineError(f"Hunyuan3D-2 not installed at {HUNYUAN}; run local/setup_hunyuan.sh")
     q = opt.get("quality", "standard")
-    model, octree = {"draft": ("mini", 192), "standard": ("mini", 256), "high": ("full", 320)}[q]
+    # The 1.1B model at 320 keeps fur strands and whiskers the 0.6B mini loses, at about the same CPU time.
+    model, octree = {"draft": ("mini", 256), "standard": ("full", 320), "high": ("full", 380)}[q]
     cmd = [str(py), "-I", str(ROOT / "ratmesh/hunyuan_local.py"), str(img), str(out), "--engine", str(HUNYUAN),
            "--model", model, "--octree", str(octree), "--faces", str(int(opt["polys"])), "--seed", str(int(opt.get("seed", 0)))]
     for side, path in opt.get("views", {}).items():
@@ -210,7 +211,7 @@ ENGINES = {
     "hunyuan3": {"run": hunyuan3, "label": "Hunyuan3D v3 (fal.ai)", "key": "FAL_KEY", "cost": "see fal.ai", "multiview": True},
     "meshy": {"run": meshy, "label": "Meshy (latest)", "key": "MESHY_API_KEY", "cost": "Meshy credits", "multiview": True},
     "trellis2-hf": {"run": trellis2_hf, "label": "TRELLIS.2 (HF Space)", "key": "HF_TOKEN", "cost": "HF GPU quota", "multiview": False},
-    "hunyuan-local": {"run": hunyuan_local, "label": "Hunyuan3D-2 (local CPU)", "key": None, "cost": "free, ~10–25 min", "multiview": True, "needs": HUNYUAN},
+    "hunyuan-local": {"run": hunyuan_local, "label": "Hunyuan3D-2 (local CPU)", "key": None, "cost": "free, ~25 min on this CPU", "multiview": True, "needs": HUNYUAN},
     "triposr": {"run": triposr, "label": "TripoSR (local CPU draft)", "key": None, "cost": "free", "multiview": False, "needs": TRIPOSR},
 }
 
