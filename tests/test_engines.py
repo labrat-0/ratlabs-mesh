@@ -50,7 +50,7 @@ def test_trellis2(mock):
     body = json.loads(calls[0][3])
     assert calls[0][1] == "https://queue.fal.run/fal-ai/trellis-2" and calls[0][2] == "Key fk"
     assert body["image_url"].startswith("data:image/png;base64,") and body["resolution"] == "1024"
-    assert body["decimation_target"] == 15000 and body["texture_size"] == "2048" and body["seed"] == 7
+    assert body["decimation_target"] == 30000 and body["texture_size"] == "2048" and body["seed"] == 7
     assert (tmp / "o.glb").read_text() == "https://cdn/model.glb" and meta["engine"] == "trellis2"
 
 
