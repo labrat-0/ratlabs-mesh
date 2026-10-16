@@ -196,6 +196,8 @@ def hunyuan_local(img, out, opt, log):
         cmd += ["--" + side, str(path)]
     if not opt.get("delight", True):
         cmd.append("--keep-lighting")
+    if opt.get("detail_source"):
+        cmd += ["--detail-source", opt["detail_source"]]
     # One local job per machine: each needs ~16 GB, and two at once exhaust 30 GB of RAM.
     # A file lock covers studio jobs and CLI jobs alike.
     with open(LOCAL_LOCK, "w") as lock:

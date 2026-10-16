@@ -100,6 +100,9 @@ def finish(raw, out, job, renders):
     spec = {"in": str(raw), "out": str(out), "height": job["height"], "polys": job["polys"],
             "texture": job["texture"], "origin": job["origin"], "rotate": job["rotate"],
             "renders": str(renders) if renders else None, "stats": str(out.with_suffix(".json")), "name": slug(job["name"])}
+    hipoly = Path(raw).parent / "work" / "hipoly.glb"
+    if hipoly.exists():
+        spec["hipoly"] = str(hipoly)
     sp = out.with_suffix(".spec.json")
     sp.write_text(json.dumps(spec))
     r = subprocess.run([BLENDER, "-b", "--python", str(ROOT / "ratmesh/finish_blender.py"), "--", str(sp)],
@@ -130,7 +133,8 @@ def run(jid):
                 raise engines.EngineError(f"{need} is not set. Add it with Keys in the UI or ~/.config/ratlabs-mesh/keys.env")
             _log(job, "prep: cutting out the subject")
             src = next(d.glob("source.*"))
-            job["prep"] = prep.prepare(src, d / "prep.png", crop=job["crop"], keep_background=job["keep_background"])
+            job["prep"] = prep.prepare(src, d / "prep.png", crop=job["crop"], keep_background=job["keep_background"],
+                                      hi_out=d / "prep_hi.png")
             for note in job["prep"]["notes"]:
                 _log(job, "prep note: " + note)
             views = {}
@@ -141,6 +145,7 @@ def run(jid):
                 prep.prepare(v, out)
                 views[v.stem] = str(out)
             opt["views"] = views
+            opt["detail_source"] = str(d / "prep_hi.png")
             run_engine = engines.ENGINES[job["engine"]]["run"]
 
             def gen(i):

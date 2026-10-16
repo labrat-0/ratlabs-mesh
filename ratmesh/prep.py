@@ -11,6 +11,7 @@ from PIL import Image, ImageOps
 from scipy import ndimage
 
 SIZE = 1024      # what TRELLIS.2 / Hunyuan / Meshy expect
+HI_SIZE = 2048   # detail source for the local painter
 MARGIN = 0.08    # empty border around the subject, as a fraction of the square
 
 
@@ -25,7 +26,16 @@ def cutout(im, model="birefnet-general"):
     return remove(im.convert("RGB"), session=_session(model))
 
 
-def prepare(src, out, crop=None, model="birefnet-general", keep_background=False):
+def square(subject, size):
+    inner = int(size * (1 - 2 * MARGIN))
+    scale = inner / max(subject.size)
+    subject = subject.resize((max(1, round(subject.width * scale)), max(1, round(subject.height * scale))), Image.LANCZOS)
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    canvas.paste(subject, ((size - subject.width) // 2, (size - subject.height) // 2), subject)
+    return canvas
+
+
+def prepare(src, out, crop=None, model="birefnet-general", keep_background=False, hi_out=None):
     """Write a square RGBA cut-out to `out` and return quality notes.
 
     crop: optional (x0, y0, x1, y1) as 0..1 fractions of the source image,
@@ -70,13 +80,11 @@ def prepare(src, out, crop=None, model="birefnet-general", keep_background=False
     if max(sw, sh) < 512:
         notes.append(f"Subject is only {max(sw, sh)}px tall/wide; a larger source gives sharper textures.")
 
-    inner = int(SIZE * (1 - 2 * MARGIN))
-    scale = inner / max(sw, sh)
-    subject = subject.resize((max(1, round(sw * scale)), max(1, round(sh * scale))), Image.LANCZOS)
-    canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    canvas.paste(subject, ((SIZE - subject.width) // 2, (SIZE - subject.height) // 2), subject)
     Path(out).parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(out)
+    square(subject, SIZE).save(out)
+    if hi_out:
+        # Full-resolution copy for the detail pass: never smaller than the engine input.
+        square(subject, max(SIZE, min(HI_SIZE, int(max(sw, sh) / (1 - 2 * MARGIN))))).save(hi_out)
     return {
         "subject_px": [int(sw), int(sh)],
         "aspect": round(sh / sw, 3),

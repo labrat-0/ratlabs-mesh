@@ -164,6 +164,63 @@ if not me.materials or not any(me.materials):
     me.materials.append(mat)
     stats["vertex_colors"] = True
 
+# --- normal map: keep the full-detail surface's sculpting on the game mesh ---
+if spec.get("hipoly") and me.uv_layers:
+    import numpy as np
+    keep = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=spec["hipoly"])
+    his = [o for o in bpy.data.objects if o not in keep and o.type == "MESH"]
+    for o in [o for o in bpy.data.objects if o not in keep and o.type != "MESH"]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    hi = his[0]
+    if len(his) > 1:
+        with bpy.context.temp_override(active_object=hi, selected_editable_objects=his):
+            bpy.ops.object.join()
+    hi.data.transform(hi.matrix_world)
+    hi.matrix_world.identity()
+    # Same rotate, scale and shift the game mesh received above.
+    co = np.empty(len(hi.data.vertices) * 3)
+    hi.data.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    if spec.get("rotate"):
+        r = math.radians(spec["rotate"])
+        co = co @ np.array([[math.cos(r), math.sin(r), 0], [-math.sin(r), math.cos(r), 0], [0, 0, 1]])
+    co = co * s + np.array(shift)
+    hi.data.vertices.foreach_set("co", co.ravel())
+    hi.data.update()
+    for p in hi.data.polygons:
+        p.use_smooth = True
+    sc = bpy.context.scene
+    sc.render.engine = "CYCLES"
+    sc.cycles.device = "CPU"
+    sc.cycles.samples = 1
+    nimg = bpy.data.images.new("normal", tex, tex)
+    nimg.colorspace_settings.name = "Non-Color"
+    targets = []
+    for mat in me.materials:
+        nt = mat.node_tree
+        node = nt.nodes.new("ShaderNodeTexImage")
+        node.image = nimg
+        node.interpolation = "Linear"
+        nt.nodes.active = node
+        targets.append((mat, node))
+    bpy.ops.object.select_all(action="DESELECT")
+    hi.select_set(True)
+    body.select_set(True)
+    bpy.context.view_layer.objects.active = body
+    ext = max(mx - mn)
+    bpy.ops.object.bake(type="NORMAL", normal_space="TANGENT", use_selected_to_active=True,
+                        cage_extrusion=ext * 0.01, max_ray_distance=ext * 0.03, margin=16)
+    for mat, node in targets:
+        nt = mat.node_tree
+        bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+        nm = nt.nodes.new("ShaderNodeNormalMap")
+        nt.links.new(node.outputs["Color"], nm.inputs["Color"])
+        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    bpy.data.objects.remove(hi, do_unlink=True)
+    stats["normal_map"] = [tex, tex]
+    stats["hipoly_verts"] = len(co)
+
 # --- quality report ---
 bm = bmesh.new()
 bm.from_mesh(me)
