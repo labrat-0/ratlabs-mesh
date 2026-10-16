@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RatLabs Mesh</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><g fill='%2338f5c6'><circle cx='8' cy='2' r='1.4'/><circle cx='3' cy='5' r='1.4'/><circle cx='13' cy='5' r='1.4'/><circle cx='8' cy='8' r='1.4'/><circle cx='3' cy='11' r='1.4'/><circle cx='13' cy='11' r='1.4'/><circle cx='8' cy='14' r='1.4'/></g></svg>">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dots" aria-hidden="true"></span><b>RatLabs</b> Mesh</div>
+  <div id="engineChips" class="chips"></div>
+  <button id="keysBtn" class="ghost">Keys</button>
+</header>
+
+<main>
+  <section id="create" class="panel">
+    <h2>New asset</h2>
+    <div id="drop" class="drop" tabindex="0">
+      <input id="file" type="file" accept=".png,.jpg,.jpeg,.webp,.glb" hidden>
+      <div class="dropHint">Drop character art or a .glb<br><small>or click to choose</small></div>
+      <div id="stage" hidden>
+        <div class="imgwrap"><img id="srcImg" alt="source art"><div id="cropBox" hidden></div></div>
+        <img id="cutImg" alt="cut-out preview" hidden>
+      </div>
+    </div>
+    <div class="row tight" id="srcTools" hidden>
+      <span class="hint" id="cropHint">Drag on the art to box one character.</span>
+      <button id="clearCrop" class="ghost sm">Clear box</button>
+      <button id="previewCut" class="ghost sm">Preview cut-out</button>
+    </div>
+    <p id="prepNote" class="note" hidden></p>
+
+    <label>Kind</label>
+    <div id="kinds" class="seg"></div>
+
+    <label for="engine">Engine</label>
+    <select id="engine"></select>
+    <p id="engineNote" class="hint"></p>
+
+    <div id="views" class="views" hidden>
+      <label>Extra views <small>(optional, sharper backs)</small></label>
+      <div class="viewrow">
+        <label class="vdrop"><input type="file" data-side="back" accept="image/*" hidden><span>Back</span></label>
+        <label class="vdrop"><input type="file" data-side="left" accept="image/*" hidden><span>Left</span></label>
+        <label class="vdrop"><input type="file" data-side="right" accept="image/*" hidden><span>Right</span></label>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div><label for="quality">Quality</label><select id="quality"><option>draft</option><option selected>standard</option><option>high</option></select></div>
+      <div><label for="variants">Variants</label><select id="variants"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+    </div>
+
+    <details>
+      <summary>Finishing</summary>
+      <div class="grid2">
+        <div><label for="name">Name</label><input id="name" placeholder="from file"></div>
+        <div><label for="height">Height (m)</label><input id="height" type="number" step="0.01" min="0.01"></div>
+        <div><label for="polys">Triangles</label><input id="polys" type="number" step="1000" min="1000"></div>
+        <div><label for="texture">Texture</label><select id="texture"><option>1024</option><option>2048</option><option>4096</option></select></div>
+        <div><label for="origin">Pivot</label><select id="origin"><option value="bottom">feet (bottom)</option><option value="center">center</option></select></div>
+        <div><label for="pose">Pose (Meshy)</label><select id="pose"><option value="">as drawn</option><option>a-pose</option><option>t-pose</option></select></div>
+      </div>
+      <label class="check"><input id="pbr" type="checkbox" checked> PBR materials</label>
+      <label class="check"><input id="keepBg" type="checkbox"> Art is already isolated (skip cut-out)</label>
+    </details>
+
+    <button id="go" class="primary" disabled>Generate</button>
+  </section>
+
+  <section id="viewerPanel" class="panel viewer">
+    <div class="vbar">
+      <div id="variantTabs" class="seg sm"></div>
+      <div class="seg sm" id="modes">
+        <button data-mode="texture" class="on">Texture</button><button data-mode="clay">Clay</button><button data-mode="wire">Wire</button>
+      </div>
+      <div class="seg sm" id="lights">
+        <button data-light="studio" class="on">Studio</button><button data-light="neon">Neon</button>
+      </div>
+      <button id="spin" class="ghost sm on">Turntable</button>
+    </div>
+    <div id="canvasWrap"><canvas id="view"></canvas>
+      <div id="empty" class="empty">Generate something, or pick one from the library.</div>
+      <div id="progress" hidden><div class="pulse"></div><span id="progressText"></span></div>
+    </div>
+    <div id="detail" hidden>
+      <div class="stats" id="stats"></div>
+      <div class="actions">
+        <a id="dlGlb" class="primary sm" download>Download GLB</a>
+        <a id="dlRaw" class="ghost sm" download>Raw GLB</a>
+        <a id="dlSheet" class="ghost sm" target="_blank">Review sheet</a>
+        <button id="rerun" class="ghost sm">Run again</button>
+      </div>
+      <details id="refinishBox">
+        <summary>Refinish (free, no GPU)</summary>
+        <div class="grid4">
+          <div><label for="rfHeight">Height (m)</label><input id="rfHeight" type="number" step="0.01"></div>
+          <div><label for="rfPolys">Triangles</label><input id="rfPolys" type="number" step="1000"></div>
+          <div><label for="rfRotate">Turn (deg)</label><input id="rfRotate" type="number" step="90"></div>
+          <div><label for="rfOrigin">Pivot</label><select id="rfOrigin"><option value="bottom">feet</option><option value="center">center</option></select></div>
+        </div>
+        <button id="refinish" class="ghost sm">Apply</button>
+      </details>
+      <pre id="log"></pre>
+    </div>
+  </section>
+
+  <section id="library" class="panel">
+    <h2>Library</h2>
+    <div id="jobs" class="jobs"></div>
+  </section>
+</main>
+
+<dialog id="keysDlg">
+  <form method="dialog" id="keysForm">
+    <h2>Engine keys</h2>
+    <p class="hint">Stored on this machine only, in <code>~/.config/ratlabs-mesh/keys.env</code> (mode 600). Leave a field blank to keep its current value.</p>
+    <label for="kFal">fal.ai key <small>TRELLIS.2, Hunyuan3D</small></label><input id="kFal" name="FAL_KEY" type="password" autocomplete="off">
+    <label for="kMeshy">Meshy API key</label><input id="kMeshy" name="MESHY_API_KEY" type="password" autocomplete="off">
+    <label for="kHf">Hugging Face token <small>PRO quota for the TRELLIS.2 Space</small></label><input id="kHf" name="HF_TOKEN" type="password" autocomplete="off">
+    <div class="row"><button value="cancel" class="ghost">Cancel</button><button id="saveKeys" value="save" class="primary">Save</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
