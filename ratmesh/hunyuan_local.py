@@ -20,6 +20,8 @@ ap.add_argument("out", type=Path)
 ap.add_argument("--engine", type=Path, required=True)
 ap.add_argument("--model", choices=["mini", "full"], default="mini")
 ap.add_argument("--steps", type=int, default=5)
+ap.add_argument("--base", action="store_true", help="non-turbo shape model: slower, follows the art more closely")
+ap.add_argument("--guidance", type=float, default=5.0)
 ap.add_argument("--octree", type=int, default=256)
 ap.add_argument("--faces", type=int, default=30000)
 ap.add_argument("--seed", type=int, default=1234)
@@ -66,7 +68,7 @@ else:
         repo, sub = "tencent/Hunyuan3D-2mv", "hunyuan3d-dit-v2-mv-turbo"
         prompt = {"front": front, **views}
     elif a.model == "full":
-        repo, sub = "tencent/Hunyuan3D-2", "hunyuan3d-dit-v2-0-turbo"
+        repo, sub = "tencent/Hunyuan3D-2", "hunyuan3d-dit-v2-0" if a.base else "hunyuan3d-dit-v2-0-turbo"
         prompt = front
     else:
         repo, sub = "tencent/Hunyuan3D-2mini", "hunyuan3d-dit-v2-mini-turbo"
@@ -76,7 +78,7 @@ else:
     # The turbo VAE that enable_flashvdm swaps in loads as fp16; cast afterwards.
     shape.to(device="cpu", dtype=torch.float32)
     stage("shape", model=sub)
-    mesh = shape(image=prompt, num_inference_steps=a.steps, octree_resolution=a.octree, num_chunks=20000,
+    mesh = shape(image=prompt, num_inference_steps=a.steps, octree_resolution=a.octree, num_chunks=20000, guidance_scale=a.guidance,
                  generator=torch.manual_seed(a.seed), output_type="trimesh")[0]
     del shape
     stage("cleanup", faces=len(mesh.faces))
