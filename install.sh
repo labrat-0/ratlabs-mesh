@@ -48,7 +48,7 @@ cat > "$BIN" <<EOF
 # Opens RatLabs Mesh as an app window, starting the local server if needed.
 set -euo pipefail
 URL="http://127.0.0.1:$PORT/"
-up() { curl -fsS -o /dev/null --max-time 1 "\$URL/api/config"; }
+up() { curl -fsS -o /dev/null --max-time 1 "\${URL}api/config"; }
 if ! up; then
   systemctl --user start ratlabs-mesh.service
   for _ in \$(seq 1 80); do up && break; sleep 0.1; done
