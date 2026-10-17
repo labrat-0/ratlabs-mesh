@@ -65,7 +65,22 @@ def fal_url(path):
     return j["file_url"]
 
 
-def _fal(endpoint, payload, log, poll=3):
+def _fal(endpoint, payload, log, poll=3, tries=4):
+    """Run a fal queue request, retrying when the provider behind fal is briefly unavailable
+    (Hunyuan3D v3 answers 504 "downstream service unavailable" under load; those aren't billed)."""
+    for attempt in range(tries):
+        try:
+            return _fal_once(endpoint, payload, log, poll)
+        except EngineError as e:
+            msg = str(e)
+            if attempt == tries - 1 or not ("downstream" in msg or " 502" in msg or " 503" in msg):
+                raise
+            wait = 20 * 2 ** attempt
+            log(f"fal provider busy, retrying in {wait}s")
+            time.sleep(wait)
+
+
+def _fal_once(endpoint, payload, log, poll=3):
     headers = {"Authorization": "Key " + _need("FAL_KEY")}
     with httpx.Client(timeout=120, headers=headers) as c:
         r = c.post(f"https://queue.fal.run/{endpoint}", json=payload)
