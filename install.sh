@@ -16,7 +16,7 @@ case "${1:-}" in
   --port) PORT="$2" ;;
   --uninstall)
     systemctl --user disable --now ratlabs-mesh.service 2>/dev/null || true
-    rm -f "$UNIT" "$BIN" "$DESKTOP"
+    rm -f "$UNIT" "$BIN" "$DESKTOP" "$HOME"/.local/share/icons/hicolor/*/apps/ratlabs-mesh.png
     systemctl --user daemon-reload
     echo "Removed the service and launcher. The repo and jobs/ are untouched."
     exit 0 ;;
@@ -58,13 +58,18 @@ if command -v omarchy-launch-webapp >/dev/null; then exec omarchy-launch-webapp 
 EOF
 chmod +x "$BIN"
 
+for n in 32 48 64 128 256 512; do
+  install -Dm644 "$ROOT/assets/icon-$n.png" "$HOME/.local/share/icons/hicolor/${n}x${n}/apps/ratlabs-mesh.png"
+done
+gtk-update-icon-cache -q "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+
 cat > "$DESKTOP" <<EOF
 [Desktop Entry]
 Type=Application
 Name=RatLabs Mesh
 Comment=Turn character art into finished 3D models
 Exec=$BIN
-Icon=applications-graphics
+Icon=ratlabs-mesh
 Terminal=false
 Categories=Graphics;3DGraphics;
 EOF
