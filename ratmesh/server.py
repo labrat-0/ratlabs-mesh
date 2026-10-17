@@ -10,7 +10,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import engines, jobs, prep
+from . import engines, jobs, market, prep
 from .config import JOBS, KEYS_FILE, PRESETS, ROOT, load_keys
 
 app = FastAPI(title="RatLabs Mesh")
@@ -43,9 +43,11 @@ def config():
 
 
 @app.post("/api/keys")
-def set_keys(FAL_KEY: str = Form(""), MESHY_API_KEY: str = Form(""), HF_TOKEN: str = Form("")):
+def set_keys(FAL_KEY: str = Form(""), MESHY_API_KEY: str = Form(""), HF_TOKEN: str = Form(""),
+             SKETCHFAB_TOKEN: str = Form(""), POLYPIZZA_KEY: str = Form("")):
     keys = load_keys() if KEYS_FILE.exists() else {}
-    for k, v in (("FAL_KEY", FAL_KEY), ("MESHY_API_KEY", MESHY_API_KEY), ("HF_TOKEN", HF_TOKEN)):
+    for k, v in (("FAL_KEY", FAL_KEY), ("MESHY_API_KEY", MESHY_API_KEY), ("HF_TOKEN", HF_TOKEN),
+                 ("SKETCHFAB_TOKEN", SKETCHFAB_TOKEN), ("POLYPIZZA_KEY", POLYPIZZA_KEY)):
         if v.strip():
             keys[k] = v.strip()
     KEYS_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +137,65 @@ def rerun(jid: str):
     jobs.load(jid)
     work.put(("run", jid, {}))
     return {"queued": jid}
+
+
+# ---------- market ----------
+
+@app.get("/api/market/sources")
+def market_sources():
+    return market.sources()
+
+
+@app.get("/api/market/search")
+def market_search(source: str, kind: str = "model", q: str = "", page: int = 0):
+    if source not in market.SOURCES:
+        raise HTTPException(404, "unknown source")
+    try:
+        return market.search(source, q, kind, page)
+    except market.MarketError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/market/grab")
+def market_grab(item: str = Form(...), res: str = Form("2k")):
+    it = json.loads(item)
+    if it.get("source") not in market.SOURCES or it.get("kind") not in market.KINDS:
+        raise HTTPException(400, "bad item")
+    try:
+        return market.grab(it, res)
+    except (market.MarketError, KeyError) as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/market/library")
+def market_library():
+    return market.library()
+
+
+@app.post("/api/market/import")
+def market_import(source: str = Form(...), id: str = Form(...), kind: str = Form("prop"), height: float = Form(0)):
+    if kind not in PRESETS:
+        raise HTTPException(400, "bad kind")
+    try:
+        job = market.import_to_studio(source, id, kind, height)
+    except (market.MarketError, FileNotFoundError) as e:
+        raise HTTPException(400, str(e))
+    work.put(("run", job["id"], {}))
+    return job
+
+
+@app.delete("/api/market/library/{source}/{id}")
+def market_remove(source: str, id: str):
+    market.remove(source, id)
+    return {"removed": id}
+
+
+@app.get("/library/{path:path}")
+def library_files(path: str):
+    p = (market.LIB / path).resolve()
+    if market.LIB.resolve() not in p.parents or not p.is_file():
+        raise HTTPException(404)
+    return FileResponse(p)
 
 
 @app.get("/files/{jid}/{path:path}")

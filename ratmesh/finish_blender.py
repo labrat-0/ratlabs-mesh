@@ -113,7 +113,8 @@ except Exception:
 # --- real-world size and pivot ---
 mn, mx = bounds()
 size = mx - mn
-s = float(spec["height"]) / max(size.z, 1e-9)
+# height 0 keeps the model's own size (downloaded assets are usually already real-world scale)
+s = float(spec["height"]) / max(size.z, 1e-9) if float(spec["height"]) > 0 else 1.0
 for v in me.vertices:
     v.co *= s
 mn, mx = bounds()

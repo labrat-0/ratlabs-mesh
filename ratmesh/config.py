@@ -35,7 +35,7 @@ def load_keys():
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
                 keys[k.strip()] = v.strip().strip('"').strip("'")
-    for k in ("FAL_KEY", "MESHY_API_KEY", "HF_TOKEN"):
+    for k in ("FAL_KEY", "MESHY_API_KEY", "HF_TOKEN", "SKETCHFAB_TOKEN", "POLYPIZZA_KEY"):
         if os.environ.get(k):
             keys[k] = os.environ[k]
     return keys

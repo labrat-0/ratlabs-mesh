@@ -3,3 +3,4 @@ __pycache__/
 jobs/
 *.blend1
 packages/
+library/

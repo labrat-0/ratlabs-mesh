@@ -11,6 +11,7 @@
 <body>
 <header>
   <div class="brand"><img class="logo" src="icon-128.png" alt="" aria-hidden="true"><b>RatLabs</b> Mesh</div>
+  <nav class="tabs seg" id="tabs"><button data-tab="studio" class="on">Studio</button><button data-tab="market">Market</button></nav>
   <div id="engineChips" class="chips"></div>
   <button id="keysBtn" class="ghost">Keys</button>
 </header>
@@ -119,12 +120,30 @@
   </section>
 </main>
 
+<section id="market" hidden>
+  <div class="panel mbar">
+    <div class="mrow">
+      <div class="seg" id="mKinds"><button data-kind="model" class="on">Models</button><button data-kind="material">Materials</button><button data-kind="hdri">HDRI skies</button></div>
+      <form id="mForm" class="msearch"><input id="mQ" placeholder="search: barrel, rust, server, night sky..." autocomplete="off"><button class="primary sm">Search</button></form>
+      <select id="mRes" class="sm" title="Download resolution for textures and HDRIs"><option>1k</option><option selected>2k</option><option>4k</option></select>
+    </div>
+    <div class="seg" id="mSources"></div>
+    <p class="hint" id="mNote"></p>
+  </div>
+  <div class="mgrid">
+    <div class="panel"><h2 id="mHead">Results</h2><div id="mResults" class="cards"></div><button id="mMore" class="ghost sm" hidden>More</button></div>
+    <div class="panel"><h2>My downloads</h2><div id="mLib" class="mlib"></div></div>
+  </div>
+</section>
+
 <dialog id="keysDlg">
   <form method="dialog" id="keysForm">
     <h2>Engine keys</h2>
     <p class="hint">Stored on this machine only, in <code>~/.config/ratlabs-mesh/keys.env</code> (mode 600). Leave a field blank to keep its current value.</p>
     <label for="kFal">fal.ai key <small>TRELLIS.2, Hunyuan3D</small></label><input id="kFal" name="FAL_KEY" type="password" autocomplete="off">
     <label for="kMeshy">Meshy API key</label><input id="kMeshy" name="MESHY_API_KEY" type="password" autocomplete="off">
+    <label for="kSf">Sketchfab API token <small>free: sketchfab.com &gt; Settings &gt; Password &amp; API; needed to download</small></label><input id="kSf" name="SKETCHFAB_TOKEN" type="password" autocomplete="off">
+    <label for="kPp">Poly Pizza API key <small>free: poly.pizza/settings/api; low-poly game models</small></label><input id="kPp" name="POLYPIZZA_KEY" type="password" autocomplete="off">
     <label for="kHf">Hugging Face token <small>PRO quota for the TRELLIS.2 Space</small></label><input id="kHf" name="HF_TOKEN" type="password" autocomplete="off">
     <div class="row"><button value="cancel" class="ghost">Cancel</button><button id="saveKeys" value="save" class="primary">Save</button></div>
   </form>

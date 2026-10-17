@@ -78,7 +78,7 @@ def create(source, name=None, kind="character", engine="trellis2", variants=1, q
     job = {
         "id": jid, "name": name, "kind": kind, "engine": "import" if glb else engine,
         "variants": 1 if glb else max(1, min(4, int(variants))), "quality": quality,
-        "height": float(height or p["height"]), "polys": int(polys or p["polys"]),
+        "height": float(p["height"] if height is None else height), "polys": int(polys or p["polys"]),
         "texture": int(texture or p["texture"]), "origin": origin or p["origin"],
         "crop": crop, "rotate": float(rotate or 0), "pbr": pbr, "pose": pose,
         "seed": int(seed if seed is not None else int(time.time()) % 100000),

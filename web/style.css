@@ -91,3 +91,32 @@ code{color:var(--neon2)}
 }
 #clip{width:auto;max-width:190px;padding:4px 8px;font-size:12px}
 .brand .logo{width:30px;height:30px;filter:drop-shadow(0 0 6px rgba(56,245,198,.25))}
+
+/* tabs + market */
+.tabs button{padding:5px 12px}
+#market{padding:14px 20px;display:grid;gap:14px}
+.mbar{display:grid;gap:10px}
+.mrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.msearch{display:flex;gap:6px;flex:1;min-width:240px}
+#mRes{width:auto}
+.mgrid{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#06080b;display:flex;flex-direction:column}
+.card:hover{border-color:#2c3a48}
+.card .thumb{aspect-ratio:1;background:#040507 center/cover no-repeat}
+.card .meta{padding:6px 8px;font-size:11.5px;display:grid;gap:3px}
+.card .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sub{color:var(--dim);font-size:10.5px;display:flex;justify-content:space-between;gap:6px}
+.card .lic{color:var(--neon)}
+.card .lic.by{color:var(--warn)}
+.card .acts{display:flex;gap:6px;padding:0 8px 8px}
+.card .acts>*{flex:1;text-align:center}
+.mlib{display:grid;gap:8px;max-height:75vh;overflow:auto}
+.litem{display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px}
+.litem img{width:48px;height:48px;object-fit:cover;border-radius:5px;background:#040507}
+.litem .n{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.litem .s{font-size:10.5px;color:var(--dim)}
+.litem .row{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.litem code{font-size:10px;color:var(--dim);word-break:break-all}
+@media (max-width:900px){.mgrid{grid-template-columns:1fr}#market{padding:12px 16px}}
+a.sm{padding:4px 9px;font-size:12px}
