@@ -159,7 +159,9 @@ function showVariant() {
   $('#dlGlb').href = base + r.glb + '?t=' + Date.now(); $('#dlGlb').download = r.glb.split('/').pop();
   $('#dlRaw').href = base + r.raw; $('#dlRaw').download = current.name + '-raw.glb';
   $('#dlSheet').href = base + r.renders + '/sheet.jpg';
-  loadModel(base + r.glb + '?t=' + Date.now());
+  $('#dlRig').hidden = !r.rigged; $('#rigBtn').textContent = r.rigged ? 'Re-rig' : 'Rig + animate';
+  if (r.rigged) { $('#dlRig').href = base + r.rigged + '?t=' + Date.now(); $('#dlRig').download = r.rigged.split('/').pop(); }
+  loadModel(base + (r.rigged || r.glb) + '?t=' + Date.now());
 }
 
 $('#refinish').onclick = async () => {
@@ -168,6 +170,7 @@ $('#refinish').onclick = async () => {
   await api(`/api/jobs/${current.id}/refinish`, { method: 'POST', body: fd });
   current.status = 'queued'; setTimeout(() => openJob(current.id), 500);
 };
+$('#rigBtn').onclick = async () => { await api(`/api/jobs/${current.id}/rig`, { method: 'POST' }); current.status = 'queued'; setTimeout(() => openJob(current.id), 500); };
 $('#rerun').onclick = async () => { await api(`/api/jobs/${current.id}/rerun`, { method: 'POST' }); current.status = 'queued'; setTimeout(() => openJob(current.id), 500); };
 
 // ---------------- viewer ----------------
@@ -198,13 +201,25 @@ let model = null, mode = 'texture', lightMode = 'studio', origMats = new Map();
 const clay = new THREE.MeshStandardMaterial({ color: 0xb9b4ad, roughness: .62 });
 const wireMat = new THREE.MeshBasicMaterial({ color: 0x38f5c6, wireframe: true, transparent: true, opacity: .55 });
 
-function clearModel() { if (model) { scene.remove(model); model.traverse(o => { o.geometry?.dispose(); }); model = null; origMats.clear(); } }
+let mixer = null, clips = [];
+const clock = new THREE.Clock();
+function playClip(name) {
+  if (!mixer) return;
+  mixer.stopAllAction();
+  const c = clips.find(c => c.name === name);
+  if (c) mixer.clipAction(c).play();
+}
+$('#clip').onchange = e => playClip(e.target.value);
+function clearModel() { mixer = null; clips = []; $('#clip').hidden = true; if (model) { scene.remove(model); model.traverse(o => { o.geometry?.dispose(); }); model = null; origMats.clear(); } }
 function loadModel(url) {
   new GLTFLoader().load(url, g => {
     clearModel(); model = g.scene;
     model.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; origMats.set(o, o.material); } });
     scene.add(model);
-    const box = new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    // Measure the meshes' own geometry: a skinned mesh's object bounds follow the skeleton, not the body.
+    const box = new THREE.Box3(); model.updateMatrixWorld(true);
+    model.traverse(o => { if (o.isMesh) { o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(o.isSkinnedMesh ? o.bindMatrix.clone().premultiply(o.matrixWorld) : o.matrixWorld)); if (o.isSkinnedMesh) o.frustumCulled = false; } });
+    const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
     const r = Math.max(size.x, size.y, size.z);
     ground.position.y = dots.position.y = box.min.y + r * 0.001;
     ground.scale.setScalar(r * 1.2); dots.scale.setScalar(r * 1.4);
@@ -214,6 +229,14 @@ function loadModel(url) {
     key.position.copy(c).add(new THREE.Vector3(-r * 1.5, r * 2.5, r * 2)); key.target.position.copy(c);
     rimA.position.copy(c).add(new THREE.Vector3(r * 2, r, -r * 2)); rimB.position.copy(c).add(new THREE.Vector3(-r * 2, r * .6, -r * 2));
     applyMode(); applyLight();
+    clips = g.animations || [];
+    if (clips.length) {
+      mixer = new THREE.AnimationMixer(model);
+      const names = clips.map(c => c.name).sort();
+      const pick = names.includes('Idle_Loop') ? 'Idle_Loop' : names[0];
+      $('#clip').innerHTML = names.map(n => `<option ${n === pick ? 'selected' : ''}>${esc(n)}</option>`).join('');
+      $('#clip').hidden = false; playClip(pick);
+    }
   });
 }
 function applyMode() {
@@ -236,7 +259,7 @@ function resize() {
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   }
 }
-renderer.setAnimationLoop(() => { resize(); controls.update(); renderer.render(scene, camera); });
+renderer.setAnimationLoop(() => { const dt = clock.getDelta(); mixer?.update(dt); resize(); controls.update(); renderer.render(scene, camera); });
 
 await loadConfig();
 await refreshLibrary();

@@ -89,3 +89,4 @@ code{color:var(--neon2)}
   #canvasWrap{min-height:360px}
   .grid4{grid-template-columns:1fr 1fr}
 }
+#clip{width:auto;max-width:190px;padding:4px 8px;font-size:12px}

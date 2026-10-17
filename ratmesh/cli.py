@@ -5,6 +5,7 @@
   ratmesh make front.png --back back.png --engine hunyuan3
   ratmesh import old.glb --kind critter --height 0.1      # finish an existing model
   ratmesh refinish <job> --polys 12000 --height 1.4       # re-finish, no GPU cost
+  ratmesh rig <job>                                       # skeleton + 88 CC0 animations
   ratmesh engines
   ratmesh serve
 """
@@ -52,6 +53,9 @@ def main():
         r.add_argument("--" + k, type=t)
     r.add_argument("--origin", choices=["bottom", "center"])
 
+    g = sub.add_parser("rig", help="auto-rig a finished job and add the CC0 animation library")
+    g.add_argument("job")
+
     sub.add_parser("engines", help="list engines and whether their keys are set")
     s = sub.add_parser("serve", help="run the studio UI")
     s.add_argument("--port", type=int, default=8771)
@@ -64,6 +68,15 @@ def main():
     if a.cmd == "serve":
         from .server import serve
         serve(a.port)
+        return
+    if a.cmd == "rig":
+        job = jobs.rig(a.job)
+        for r in job["results"]:
+            if r.get("rigged"):
+                print(f"  v{r['variant']}: {jobs.job_dir(job['id']) / r['rigged']}  {r['rig']['bones']} bones, {len(r['rig']['clips'])} clips")
+        if job["error"]:
+            print("  error:", job["error"])
+            raise SystemExit(1)
         return
     common = dict(name=a.name, kind=a.kind, height=a.height, polys=a.polys, texture=a.texture, origin=a.origin, rotate=a.rotate) if a.cmd != "refinish" else {}
     if a.cmd == "make":

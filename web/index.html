@@ -82,6 +82,7 @@
       <div class="seg sm" id="lights">
         <button data-light="studio" class="on">Studio</button><button data-light="neon">Neon</button>
       </div>
+      <select id="clip" class="sm" hidden title="Animation"></select>
       <button id="spin" class="ghost sm on">Turntable</button>
     </div>
     <div id="canvasWrap"><canvas id="view"></canvas>
@@ -95,6 +96,8 @@
         <a id="dlRaw" class="ghost sm" download>Raw GLB</a>
         <a id="dlSheet" class="ghost sm" target="_blank">Review sheet</a>
         <button id="rerun" class="ghost sm">Run again</button>
+        <button id="rigBtn" class="ghost sm" title="Skeleton + 88 free CC0 animations. Needs a biped standing with arms away from the body.">Rig + animate</button>
+        <a id="dlRig" class="primary sm" download hidden>Rigged GLB</a>
       </div>
       <details id="refinishBox">
         <summary>Refinish (free, no GPU)</summary>

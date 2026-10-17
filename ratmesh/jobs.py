@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import engines, prep
-from .config import BLENDER, JOBS, PRESETS, ROOT
+from .config import ANIM_LIBS, BLENDER, JOBS, PRESETS, ROOT
 
 _lock = threading.Lock()
 
@@ -193,6 +193,42 @@ def run(jid):
         _log(job, "failed: " + job["error"])
         with open(d / "job.log", "a") as f:
             f.write(traceback.format_exc())
+    save(job)
+    return job
+
+
+def rig(jid):
+    """Auto-rig each finished variant and retarget the CC0 animation libraries onto it."""
+    job = load(jid)
+    d = job_dir(jid)
+    missing = [str(p) for p in ANIM_LIBS if not p.exists()]
+    if missing:
+        raise FileNotFoundError("animation library missing; run local/get_animations.sh: " + missing[0])
+    job["status"] = "running"
+    save(job)
+    try:
+        for r in job["results"]:
+            _log(job, f"v{r['variant']} rig: skeleton, skin, {len(ANIM_LIBS)} animation libraries")
+            glb = d / r["glb"]
+            out = glb.with_name(glb.stem + "-rigged.glb")
+            spec = {"in": str(glb), "out": str(out), "libs": [str(p) for p in ANIM_LIBS],
+                    "stats": str(out.with_suffix(".json")), "renders": str(d / r["renders"] / "rig")}
+            sp = out.with_suffix(".spec.json")
+            sp.write_text(json.dumps(spec))
+            p = subprocess.run([BLENDER, "-b", "--python", str(ROOT / "ratmesh/rig_blender.py"), "--", str(sp)],
+                               capture_output=True, text=True, timeout=3600)
+            if p.returncode or not out.exists():
+                raise RuntimeError("rigging failed: " + (p.stderr or p.stdout)[-1500:])
+            st = json.loads(out.with_suffix(".json").read_text())
+            r["rigged"] = str(out.relative_to(d))
+            r["rig"] = {"clips": st["clips"], "bones": st["bones"], "warnings": st["warnings"]}
+            for w in st["warnings"]:
+                _log(job, f"v{r['variant']} rig warning: {w}")
+        job["status"] = "done"
+        _log(job, "done")
+    except Exception as e:
+        job["status"], job["error"] = "failed", f"{type(e).__name__}: {e}"
+        _log(job, "failed: " + job["error"])
     save(job)
     return job
 

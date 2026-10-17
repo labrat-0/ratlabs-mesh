@@ -22,7 +22,7 @@ def worker():
     while True:
         kind, jid, kw = work.get()
         try:
-            jobs.run(jid) if kind == "run" else jobs.refinish(jid, **kw)
+            {"run": jobs.run, "rig": jobs.rig}.get(kind, jobs.refinish)(jid, **kw)
         finally:
             work.task_done()
 
@@ -120,6 +120,13 @@ def refinish(jid: str, options: str = Form("{}")):
     opt = {k: v for k, v in json.loads(options).items() if k in ("height", "polys", "texture", "rotate", "origin")}
     jobs.load(jid)
     work.put(("refinish", jid, opt))
+    return {"queued": jid}
+
+
+@app.post("/api/jobs/{jid}/rig")
+def rig(jid: str):
+    jobs.load(jid)
+    work.put(("rig", jid, {}))
     return {"queued": jid}
 
 
