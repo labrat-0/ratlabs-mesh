@@ -232,6 +232,38 @@ bpy.context.view_layer.objects.active = rig
 bpy.ops.object.parent_set(type="ARMATURE_AUTO")
 groups = {g.name for g in proxy.vertex_groups}
 unweighted = sum(1 for v in proxy.data.vertices if not v.groups)
+if unweighted > 0.05 * len(proxy.data.vertices):
+    # Bone-heat weighting loses precision on small models (around 1 m). Solve it at 10x
+    # scale on throwaway copies, then copy the weights back by vertex index.
+    stats["warnings"].append(f"automatic weights failed at true size ({unweighted} unweighted); retrying at 10x")
+    big_rig = rig.copy(); big_rig.data = rig.data.copy()
+    big = proxy.copy(); big.data = proxy.data.copy()
+    for o in (big_rig, big):
+        bpy.context.scene.collection.objects.link(o)
+        o.parent = None
+        o.matrix_world = Matrix.Scale(10, 4) @ o.matrix_world
+    for m in list(big.modifiers):
+        big.modifiers.remove(m)
+    big.vertex_groups.clear()
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in (big, big_rig):
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = big
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    bpy.ops.object.select_all(action="DESELECT")
+    big.select_set(True)
+    big_rig.select_set(True)
+    bpy.context.view_layer.objects.active = big_rig
+    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    proxy.vertex_groups.clear()
+    for g in big.vertex_groups:
+        proxy.vertex_groups.new(name=g.name)
+    for v in big.data.vertices:
+        for ge in v.groups:
+            proxy.vertex_groups[big.vertex_groups[ge.group].name].add([v.index], ge.weight, "REPLACE")
+    bpy.data.objects.remove(big, do_unlink=True)
+    bpy.data.objects.remove(big_rig, do_unlink=True)
+    unweighted = sum(1 for v in proxy.data.vertices if not v.groups)
 stats["proxy_unweighted"] = unweighted
 if unweighted > 0.05 * len(proxy.data.vertices):
     stats["warnings"].append(f"automatic weights left {unweighted} proxy verts unweighted; using envelope fallback")
@@ -251,8 +283,60 @@ bpy.context.view_layer.objects.active = body
 bpy.ops.object.select_all(action="DESELECT")
 body.select_set(True)
 bpy.ops.object.modifier_apply(modifier="weights")
-bpy.ops.object.vertex_group_limit_total(group_select_mode="ALL", limit=4)
-bpy.ops.object.vertex_group_normalize_all(group_select_mode="ALL", lock_active=False)
+# Drop weights from bones far away from a vertex: stray strands and fringe that the proxy
+# transfer mapped onto the wrong limb stretch into long spikes when that limb moves.
+def prune_far_weights():
+    deform = [b for b in rig.data.bones if b.use_deform]
+    heads = np.array([b.head_local[:] for b in deform]); tails = np.array([b.tail_local[:] for b in deform])
+    co = np.array([v.co[:] for v in body.data.vertices])
+    seg = tails - heads
+    t = np.clip(np.einsum("nbk,bk->nb", co[:, None, :] - heads[None], seg) / np.maximum((seg * seg).sum(1), 1e-12), 0, 1)
+    d = np.linalg.norm(co[:, None, :] - (heads[None] + t[..., None] * seg[None]), axis=2)  # vertex x bone
+    near = d.min(1)
+    gi = {body.vertex_groups[b.name].index: k for k, b in enumerate(deform) if b.name in body.vertex_groups}
+    fixed = 0
+    for v in body.data.vertices:
+        limit = max(0.12 * H, 2.5 * near[v.index])
+        bad = [g.group for g in v.groups if g.group in gi and d[v.index, gi[g.group]] > limit and g.weight > 0]
+        if bad:
+            fixed += 1
+            for g in bad:
+                body.vertex_groups[g].remove([v.index])
+        if not any(g.weight > 0 for g in v.groups):
+            k = int(d[v.index].argmin())
+            body.vertex_groups[deform[k].name].add([v.index], 1.0, "REPLACE")
+    return fixed
+
+
+stats["far_weights_pruned"] = prune_far_weights()
+# Smooth weights along mesh edges (numpy; the Blender operator's context checks fail
+# in background mode), then keep the 4 strongest bones per vertex and normalise.
+def smooth_weights(passes=4, keep=4):
+    names = [g.name for g in body.vertex_groups]
+    nv = len(body.data.vertices)
+    W = np.zeros((nv, len(names)))
+    for v in body.data.vertices:
+        for g in v.groups:
+            W[v.index, g.group] = g.weight
+    e = np.array([ed.vertices[:] for ed in body.data.edges])
+    deg = np.bincount(e.ravel(), minlength=nv).astype(float)[:, None]
+    for _ in range(passes):
+        acc = np.zeros_like(W)
+        np.add.at(acc, e[:, 0], W[e[:, 1]])
+        np.add.at(acc, e[:, 1], W[e[:, 0]])
+        W = np.where(deg > 0, 0.5 * W + 0.5 * acc / np.maximum(deg, 1), W)
+    if W.shape[1] > keep:
+        cut = -np.sort(-W, axis=1)[:, keep - 1:keep]
+        W = np.where(W >= cut, W, 0)
+    W /= np.maximum(W.sum(1, keepdims=True), 1e-9)
+    for gi, name in enumerate(names):
+        vg = body.vertex_groups[name]
+        vg.remove(list(range(nv)))
+        for w, idx in ((w, i) for i, w in enumerate(W[:, gi]) if w > 1e-4):
+            vg.add([idx], float(w), "REPLACE")
+
+
+smooth_weights()
 bpy.data.objects.remove(proxy, do_unlink=True)
 stats["body_unweighted"] = sum(1 for v in body.data.vertices if not v.groups)
 

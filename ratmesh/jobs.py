@@ -124,7 +124,7 @@ def finish(raw, out, job, renders):
         spec["hipoly"] = str(raw)
     sp = out.with_suffix(".spec.json")
     sp.write_text(json.dumps(spec))
-    r = subprocess.run([BLENDER, "-b", "--python", str(ROOT / "ratmesh/finish_blender.py"), "--", str(sp)],
+    r = subprocess.run([BLENDER, "-b", "--python-exit-code", "1", "--python", str(ROOT / "ratmesh/finish_blender.py"), "--", str(sp)],
                        capture_output=True, text=True, timeout=1800)
     if r.returncode or not out.exists():
         raise RuntimeError("Blender finishing failed:\n" + (r.stdout + r.stderr)[-1500:])
@@ -217,7 +217,7 @@ def rig(jid):
                     "stats": str(out.with_suffix(".json")), "renders": str(d / r["renders"] / "rig")}
             sp = out.with_suffix(".spec.json")
             sp.write_text(json.dumps(spec))
-            p = subprocess.run([BLENDER, "-b", "--python", str(ROOT / "ratmesh/rig_blender.py"), "--", str(sp)],
+            p = subprocess.run([BLENDER, "-b", "--python-exit-code", "1", "--python", str(ROOT / "ratmesh/rig_blender.py"), "--", str(sp)],
                                capture_output=True, text=True, timeout=3600)
             if p.returncode or not out.exists():
                 raise RuntimeError("rigging failed: " + (p.stderr or p.stdout)[-1500:])
