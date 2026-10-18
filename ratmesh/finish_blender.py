@@ -91,8 +91,11 @@ bm.free()
 
 # --- orient: the reference front faces the camera at -Y ---
 if spec.get("rotate"):
-    body.rotation_euler.z = math.radians(spec["rotate"])
-    bpy.ops.object.transform_apply(rotation=True)
+    # Rotate the mesh data itself: transform_apply silently does nothing when the body
+    # isn't the selected object, which left the game mesh unturned while the hi-poly
+    # bake source (below) was turned, so the normal bake smeared.
+    me.transform(Matrix.Rotation(math.radians(spec["rotate"]), 4, "Z"))
+    me.update()
 
 # --- retopology budget ---
 tris = sum(len(p.vertices) - 2 for p in me.polygons)
