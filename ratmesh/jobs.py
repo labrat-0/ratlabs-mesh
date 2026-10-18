@@ -62,7 +62,7 @@ def list_jobs():
 
 def create(source, name=None, kind="character", engine="trellis2", variants=1, quality="standard",
            height=None, polys=None, texture=None, origin=None, crop=None, rotate=0, views=None,
-           pbr=True, pose=None, seed=None, glb=None, keep_background=False, delight=True):
+           pbr=True, pose=None, seed=None, glb=None, keep_background=False, delight=True, keep_parts=False):
     """Make a job folder. `glb` imports an existing model instead of generating one."""
     p = PRESETS[kind]
     name = name or Path(source or glb).stem
@@ -82,7 +82,7 @@ def create(source, name=None, kind="character", engine="trellis2", variants=1, q
         "texture": int(texture or p["texture"]), "origin": origin or p["origin"],
         "crop": crop, "rotate": float(rotate or 0), "pbr": pbr, "pose": pose,
         "seed": int(seed if seed is not None else int(time.time()) % 100000),
-        "keep_background": keep_background, "delight": bool(delight),
+        "keep_background": keep_background, "delight": bool(delight), "keep_parts": bool(keep_parts),
         "status": "queued", "stage": "queued", "created": time.time(), "results": [], "prep": None, "error": None,
     }
     save(job)
@@ -113,11 +113,13 @@ def glb_tris(path):
 def finish(raw, out, job, renders):
     spec = {"in": str(raw), "out": str(out), "height": job["height"], "polys": job["polys"],
             "texture": job["texture"], "origin": job["origin"], "rotate": job["rotate"],
-            "renders": str(renders) if renders else None, "stats": str(out.with_suffix(".json")), "name": slug(job["name"])}
+            "renders": str(renders) if renders else None, "stats": str(out.with_suffix(".json")), "name": slug(job["name"]),
+            "keep_parts": job.get("keep_parts", False)}
     hipoly = Path(raw).parent / "work" / "hipoly.glb"
     if hipoly.exists():
         spec["hipoly"] = str(hipoly)
-    elif glb_tris(raw) > 3 * int(job["polys"]):
+    elif glb_tris(raw) > 3 * int(job["polys"]) and not job.get("keep_parts"):
+        # (downloaded props carry authored normal maps and often several materials; keep those)
         # Remote engines return dense meshes; bake what decimation removes into a normal map.
         spec["hipoly"] = str(raw)
     sp = out.with_suffix(".spec.json")

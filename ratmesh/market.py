@@ -285,7 +285,7 @@ def to_glb(path):
     return out
 
 
-def import_to_studio(source, id, kind="prop", height=0):
+def import_to_studio(source, id, kind="prop", height=0, texture=None, polys=None):
     """Create a studio job that finishes a grabbed model (cleanup, budget, renders). Returns the job."""
     from . import jobs
     d = LIB / source / id
@@ -293,7 +293,8 @@ def import_to_studio(source, id, kind="prop", height=0):
     if meta["kind"] != "model":
         raise MarketError("only models can be finished in the studio")
     glb = to_glb(d / meta["main"])
-    return jobs.create(None, glb=str(glb), name=meta["name"], kind=kind, height=height)
+    return jobs.create(None, glb=str(glb), name=meta["name"], kind=kind, height=height, texture=texture, polys=polys,
+                       keep_parts=True)
 
 
 def library():

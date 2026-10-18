@@ -79,7 +79,7 @@ for comp in parts[1:]:
     # (boots, goggles, a held prop) touch or cut into it; flakes keep a gap.
     gap = min(tree.find(v.co)[2] for v in vs[:: max(1, len(vs) // 400)])
     flake = gap > diag * 0.015 and len(comp) < len(parts[0]) * 0.25
-    if speck or flake:
+    if (speck or flake) and not spec.get("keep_parts"):  # scanned/downloaded props keep every piece
         drop.extend(comp)
         dropped += 1
 if drop:
@@ -183,7 +183,8 @@ for mat in me.materials:
             if max(w, h) > tex:
                 im.scale(int(w * tex / max(w, h)), int(h * tex / max(w, h)))
             if "METALLIC" in (n.label or "").upper():
-                stats["pbr_cleaned"] = clean_metal_rough(im)
+                if not spec.get("keep_parts"):  # downloaded PBR maps are authored, not generated
+                    stats["pbr_cleaned"] = clean_metal_rough(im)
             stats["textures"].append([n.label or im.name, list(im.size)])
 if not me.materials or not any(me.materials):
     # Vertex-coloured input (TripoSR): show the colours through a real material.
