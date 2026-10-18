@@ -3,7 +3,7 @@
 Run by Blender:  blender -b --python rig_blender.py -- spec.json
 
 spec: {"in": finished.glb, "out": rigged.glb, "libs": [ual1.glb, ual2.glb],
-       "stats": out.json, "renders": dir or null}
+       "stats": out.json, "renders": dir or null, "clips": [names] to keep (optional)}
 
 The character must stand upright on the origin, feet down, facing -Y (what the
 finisher writes), arms away from the body (A- or T-pose). Steps:
@@ -379,7 +379,7 @@ for li, path in enumerate(spec["libs"]):
     if not rig.animation_data:
         rig.animation_data_create()
     for act in lib_acts:
-        if act.name in clips:
+        if act.name in clips or (spec.get("clips") and act.name not in spec["clips"]):
             continue
         play(lib, act)
         out = bpy.data.actions.new(act.name)
