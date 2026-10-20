@@ -5,7 +5,7 @@
 <p align="center"><b>Drop in character art. Get back a finished, game-ready 3D model.</b><br>
 Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigging in one local studio.</p>
 
-<p align="center"><img src="docs/screenshots/labrat-studio.png" alt="The RatLabs Mesh studio showing the Labrat, generated from 2D art and rigged"></p>
+<p align="center"><img src="docs/screenshots/labrat-studio.png" alt="The RatLabs Mesh studio showing the Labrat it generated from 2D art, side-on with its tail"></p>
 
 ---
 
