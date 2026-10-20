@@ -1,132 +1,143 @@
-# RatLabs Mesh
+<p align="center"><img src="assets/icon-128.png" width="96" alt="RatLabs Mesh icon"></p>
 
-Private. A RatLabs Studio by-product: drop in character art, get back a finished,
-game-ready 3D model. Same job as meshy.ai, but RatLabs owns every stage except the
-GPU step.
+<h1 align="center">RatLabs Mesh</h1>
+
+<p align="center"><b>Drop in character art. Get back a finished, game-ready 3D model.</b><br>
+Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigging in one local studio.</p>
+
+<p align="center"><img src="docs/screenshots/labrat-studio.png" alt="The RatLabs Mesh studio showing the Labrat, generated from 2D art and rigged"></p>
+
+---
+
+## From one picture to a model you can ship
+
+<table>
+<tr>
+<td width="30%" align="center"><img src="docs/screenshots/source-art.jpg" alt="Source art: a goblin scientist in a torn lab coat"><br><sub><b>In:</b> one piece of 2D art</sub></td>
+<td width="70%" align="center"><img src="docs/screenshots/review-sheet.jpg" alt="Front, three-quarter, side and back renders of the finished 3D model"><br><sub><b>Out:</b> a textured 3D model, shown front, ¾, side and back</sub></td>
+</tr>
+</table>
+
+Image-to-3D models give you a raw mesh. That's maybe half the work. RatLabs Mesh does the rest of the
+production chain for you, so the file you download can go straight into a game engine:
+
+- **One clean mesh** with stray floaters removed and welded seams
+- **The right triangle count**: ~30k for a character, 15k for a prop, 80k for a hero close-up
+- **One 2K texture** with sensible PBR settings (no accidental chrome)
+- **Real-world size**, with feet on the ground: a character is 1.7 m and a rat is 10 cm
+- **Front / ¾ / side / back review renders**, so you can check a model without opening Blender
+- **One-click rig + animate**: a 22-bone skeleton and 88 free CC0 animations (idle, walk, run, attack...)
+
+## The studio
+
+<p align="center"><img src="docs/screenshots/studio.png" alt="The RatLabs Mesh studio: new-asset panel, 3D viewer, stats and library"></p>
+
+Drop art on the left, pick what it is (**character, creature, critter, prop, hero**), and press **Generate**.
+Everything you've made stays in the library along the bottom. Each model comes with its stats, downloads,
+and a **Refinish** panel that re-sizes, re-budgets or turns the model around for free, with no GPU.
+
+### Inspect every model three ways
+
+| Texture | Clay | Wire |
+|---|---|---|
+| ![Textured rat creature](docs/screenshots/rat-texture.png) | ![The same rat in clay shading](docs/screenshots/rat-clay.png) | ![The same rat as a wireframe](docs/screenshots/rat-wire.png) |
+
+Clay mode shows the real shape without the paint. Wire mode shows the topology you're shipping. Flip
+between **Studio** and **Neon** lighting to see how it holds up in a dark scene.
+
+### Rigged and animated in the browser
+
+<table><tr>
+<td width="50%"><img src="docs/screenshots/hero-goblin-intern.png" alt="A rigged goblin scientist under neon lighting"></td>
+<td width="50%"><img src="docs/screenshots/goblin-manager.png" alt="A rigged goblin manager playing an idle animation"></td>
+</tr></table>
+
+Press **Rig + animate** on any standing biped. Pick a clip from the dropdown to watch it move, then
+download the rigged GLB.
+
+### Market: free assets to fill the rest of the scene
+
+<p align="center"><img src="docs/screenshots/market.png" alt="The Market tab searching for barrels across free asset libraries"></p>
+
+One search across **Poly Haven**, **ambientCG**, **Sketchfab** and **Poly Pizza** for models, materials and
+HDRI skies. Every download keeps its licence, author and source page next to it. Any model you grab can go
+through the same finishing pipeline, so a scene full of mixed sources ends up at one consistent scale.
+
+---
+
+## Pick your engine
+
+| Engine | Cost | Speed | Best for |
+|---|---|---|---|
+| **Hunyuan3D v3** (fal.ai) | ~$0.38 a model | a few minutes | Best faces. Takes back / left / right views for turnarounds |
+| **TRELLIS.2** (fal.ai) | ~$0.25–0.35 | about a minute | Fast open-model drafts |
+| **Meshy** | your Meshy plan | minutes | Reference quality; can force an A- or T-pose |
+| **Hunyuan3D-2 local** | **free, fully offline** | ~25 min on a CPU | Nothing leaves your machine. No GPU needed |
+| **TripoSR local** | free | ~90 s | Rough previews to check a cut-out and pose |
+
+The local engine runs on a plain CPU (tested on Intel integrated graphics, no NVIDIA card). Remote
+engines get only the prepared cut-out of your art; the local engine sends nothing anywhere.
+
+---
+
+## Get started
+
+**You need:** Linux, [`uv`](https://docs.astral.sh/uv/), Blender and ImageMagick. Developed on Arch
+([Omarchy](https://omarchy.org)).
 
 ```sh
-./ratmesh.sh serve                 # studio UI on http://127.0.0.1:8771
-./ratmesh.sh engines               # which engines have keys
-./ratmesh.sh make art.png --kind character --variants 2
-./ratmesh.sh make lab-scene.png --crop 0.30,0.04,0.62,0.99   # one character out of a scene
-./ratmesh.sh make front.png --back back.png --engine hunyuan3
-./ratmesh.sh import old.glb --kind critter --height 0.1      # finish an existing model
-./ratmesh.sh refinish <job-id> --polys 12000 --rotate 180    # free, no GPU
+git clone git@github.com:labrat-0/ratlabs-mesh.git
+cd ratlabs-mesh
+./ratmesh.sh serve          # first run builds the Python env, then open http://127.0.0.1:8771
 ```
 
-## How it works (and how Meshy does it)
+Want it as a desktop app with a launcher icon? Run `./install.sh` instead. It adds a background service
+and a **RatLabs Mesh** entry to your app launcher (`./install.sh --uninstall` removes both).
 
-Meshy's image-to-3D is a chain of stages. RatLabs Mesh runs the same chain:
+### Add an engine
 
-| Stage | Meshy | RatLabs Mesh | Where |
-|---|---|---|---|
-| 1. Prep | image enhancement, implicit cut-out | BiRefNet cut-out, crop box for scene art, speck removal, centred 1024² square with 8% margin, quality notes | local CPU (`ratmesh/prep.py`) |
-| 2. Generate | Meshy 6/7 diffusion model | Hunyuan3D-2 shape + multi-view paint locally, or TRELLIS.2 / Hunyuan3D v3 / Meshy remotely; 1–4 seed variants | this CPU or a remote GPU (`ratmesh/engines.py`) |
-| 3. Remesh | `should_remesh`, `target_polycount` | weld, drop floaters, collapse-decimate to the triangle budget, smooth-by-angle normals | Blender (`ratmesh/finish_blender.py`) |
-| 4. Size | `auto_size`, `origin_at` | real-world height per kind, feet-at-origin or centred pivot | Blender |
-| 5. Materials | PBR maps, `remove_lighting` | keeps PBR maps, fixes glTF's chrome default (metallic 1 → 0, roughness 1 → 0.8), caps texture size, JPEG-packed | Blender |
-| 6. Review | 4 thumbnails | front / ¾ / side / back renders on near-black, transparent PNGs + sheet | Blender EEVEE |
-| 7. Rig | auto-rig + animation library | not yet (see Next) | n/a |
+- **Paid, fast:** click **Keys** in the top-right corner and paste a [fal.ai](https://fal.ai) key (and/or a
+  Meshy key). Keys stay on your machine in `~/.config/ratlabs-mesh/keys.env`.
+- **Free, offline:** run `./local/setup_hunyuan.sh` once. It downloads ~22 GB of model weights and needs
+  ~16 GB of RAM while generating.
 
-The finished file matches the reference set (`rat-mesh.glb`, `goblin-mesh.glb`,
-`model.glb`): one mesh, ~30k triangles, one 2K base-colour texture, metallic 0,
-roughness 0.8, real height (0.1 / 1.2 / 1.7 m).
+### Make your first model
 
-### Kinds (presets)
+1. **Drop your art** onto the *New asset* panel. If the art is a scene, drag a box around one character.
+2. Click **Preview cut-out** to check the background was removed cleanly.
+3. Choose a **Kind** (it sets height, triangle budget and texture size) and an **Engine**.
+4. Press **Generate**. Two variants is the default; seeds differ a lot on backs and hands, so pick the better one.
+5. **Download GLB**, or press **Rig + animate** first and take the rigged GLB.
 
-| kind | height | triangles | texture |
-|---|---|---|---|
-| character | 1.7 m | 30,000 | 2K |
-| creature | 1.2 m | 30,000 | 2K |
-| critter | 0.1 m | 30,000 | 2K |
-| prop | 0.5 m | 15,000 | 2K |
-| hero | 1.7 m | 80,000 | 4K |
+### Tips for great results
 
-All of them can be overridden per job, and **Refinish** re-runs stages 3 to 6 on
-the stored raw GLB without spending GPU money.
+- **One subject, whole body, facing front.** Arms slightly away from the body rig best.
+- **Give it a back view** (with Hunyuan3D v3 or Meshy) when the back matters.
+- **Use "hero"** for close-ups (80k triangles, 4K texture) and **"character"** for in-game models.
+- Untick **Remove baked lighting** to keep the art's own dark, moody colour in the texture.
+- Already have a GLB from somewhere else? Drop it in and RatLabs Mesh will just finish it.
 
-## Engines
-
-| engine | model | needs | notes |
-|---|---|---|---|
-| `hunyuan-local` | Tencent Hunyuan3D-2 shape + Paint, **on this CPU** | `local/setup_hunyuan.sh` | free and offline. Shape ~6 min, paint ~20 min (about 27 min a model). Real painted backs, ~30k tris, 2K texture. Multi-view shape model when back/left/right art is given |
-| `trellis2` | Microsoft TRELLIS.2, MIT license | `FAL_KEY` | best open model; bakes texture after decimating; ~$0.25–0.35 per model on fal.ai; about a minute |
-| `hunyuan3` | Tencent Hunyuan3D v3 | `FAL_KEY` | accepts back/left/right views: use for turnarounds |
-| `meshy` | Meshy latest | `MESHY_API_KEY` | the reference quality; multi-image when views are given; `--pose a-pose` |
-| `trellis2-hf` | TRELLIS.2 official HF Space | `HF_TOKEN` | needs HF PRO: the free tier caps a job at well under the 270 s it asks for |
-| `triposr` | TripoSR on this CPU | `~/tools/TripoSR` | ~90 s coarse vertex-colour drafts for checking a cut-out and pose; never final |
-
-### The local engine
-
-This machine has Intel integrated graphics, no NVIDIA GPU. TRELLIS.2 needs NVIDIA-only kernels, but
-Hunyuan3D-2 is plain PyTorch apart from one texture rasterizer that has an upstream CPU path:
+### Prefer the command line?
 
 ```sh
-./local/setup_hunyuan.sh            # clone to ~/tools/Hunyuan3D-2, pinned venv, CPU rasterizer, patch
-./ratmesh.sh make art.png --engine hunyuan-local                  # ~25 min
-./ratmesh.sh make art.png --engine hunyuan-local --quality draft  # 0.6B mini shape model
+./ratmesh.sh make art.png --kind character --engine hunyuan3 --variants 2
+./ratmesh.sh make scene.png --crop 0.30,0.04,0.62,0.99         # one character out of a scene
+./ratmesh.sh make front.png --back back.png --engine hunyuan3   # sharper backs from a turnaround
+./ratmesh.sh import old.glb --kind prop                         # finish an existing model
+./ratmesh.sh refinish <job-id> --polys 12000 --rotate 180       # free re-finish, no GPU
+./ratmesh.sh rig <job-id>                                       # skeleton + 88 animations
+./ratmesh.sh engines                                            # which engines are ready
 ```
 
-What the setup does, and why:
-- `transformers<5`: version 5 renames DINOv2 weights and the shape checkpoint stops loading.
-- `local/custom_rasterizer_cpu/`: builds the rasterizer as a C++ extension with the CUDA kernel stubbed out.
-- `local/patch_hunyuan.py`: replaces hard-coded `'cuda'` and fp16 with `HY3D_DEVICE` / `HY3D_DTYPE`
-  (default cpu / float32, because this CPU has no fast fp16). Idempotent; asserts every edit.
-- The FlashVDM turbo VAE loads in fp16, so the driver casts the pipeline to float32 *after* enabling it.
-- The mesh is reduced to the triangle budget *before* painting, so the texture is baked onto the final topology.
-- Quality: `draft` = 0.6B mini model at octree 256; `standard` = 1.1B model at 320, which keeps fur strands
-  and whiskers the mini loses (rat test) in about the same shape time (~7.5 min); `high` = 1.1B at 380,
-  upstream's setting, not yet timed on this CPU.
-- Variants of local engines run one at a time (each needs ~16 GB RAM).
-- Delight (removing baked lighting from the art) runs 20 steps, not upstream's 50: about 2.5x faster, and
-  on RatLabs art 50 steps oversaturated toward orange and invented coloured goggle lenses.
+---
 
-Where the ~27 minutes go (goblin, CPU): shape 6–7 min; paint 19 min = multi-view diffusion 13 min, delight
-5 min (2 min at 20 steps), bake + inpaint 1 min, UV + renders 12 s.
+## Under the hood
 
-**Remove baked lighting** (UI checkbox, `--keep-lighting` to turn off) mirrors Meshy's `remove_lighting`.
-On gives an evenly lit texture that relights well in a game. Off keeps the art's own dark, moody colour,
-which is often closer to RatLabs art, and skips delight.
+How each stage works, how it lines up with Meshy's pipeline, presets, engine setup and timings:
+**[docs/TECHNICAL.md](docs/TECHNICAL.md)**.
 
-Weights (~22 GB) live in `~/.cache/huggingface`. License: Tencent Hunyuan 3D 2.0 Community License:
-commercial use allowed under 1M monthly users, **not licensed in the EU, UK or South Korea**. Check it
-before RatLabs Mesh goes public.
+**Licences.** The local engine uses Tencent's Hunyuan3D-2, under the Hunyuan 3D 2.0 Community License,
+which allows commercial use under 1M monthly users but **does not cover the EU, UK or South Korea**.
+Animations are CC0 (Quaternius). Market assets keep their own licences, saved with each download.
 
-Speed-up not yet taken: `sudo pacman -S intel-compute-runtime` enables PyTorch on the Arc iGPU (XPU).
-
-Keys for the remote engines go in `~/.config/ratlabs-mesh/keys.env` (mode 600) or through **Keys** in the UI:
-
-```
-FAL_KEY=...
-MESHY_API_KEY=...
-HF_TOKEN=...
-```
-
-Remote engine requests send the prepared cut-out to that provider. `hunyuan-local` sends nothing anywhere.
-
-## Getting a perfect character
-
-1. **One subject, whole body, plain pose.** Box the character if the art is a scene.
-   Click **Preview cut-out** before generating; a fuzzy mask warning means box tighter.
-2. **Front-facing, slightly A-posed arms** come out cleanest and rig best.
-3. **Generate 2–4 variants** and keep the best: seeds differ a lot on backs and hands.
-4. **Give it a back view** (`hunyuan3` or `meshy`) when the back matters.
-5. Use **hero** for close-ups (80k tris, 4K texture), **character** for the game.
-
-## Layout
-
-```
-ratmesh/        config, prep, engines, finish_blender, jobs, cli, server, hunyuan_local, triposr_cpu
-local/          setup + CPU patch for the local Hunyuan3D-2 engine
-web/            studio UI (three.js r160 vendored)
-samples/input/  RatLabs art used for testing
-jobs/<id>/      per-job output (git-ignored): source, prep.png, v1/raw.glb, v1/<name>.glb, v1/renders/
-```
-
-## Next
-
-- Auto-rig stage: generalise `ratlabs-underground/tools/mesh-engine/rig-meshy.py`
-  (humanoid) and `rig-rat.py` (quadruped), or call Meshy's rigging API.
-- Intel XPU (Arc iGPU) for the local engine, once `intel-compute-runtime` is installed.
-- A persistent local worker so the ~1 min model load happens once, not per job.
-- A "Send to game" button that writes into `ratlabs-underground/assets/models/`.
+<p align="center"><sub>Built by <b>RatLabs</b> · <a href="https://ratlabs.tech">ratlabs.tech</a></sub></p>
