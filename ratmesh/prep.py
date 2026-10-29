@@ -3,6 +3,10 @@
 Image-to-3D models are only as good as their input. Meshy quietly does this
 step for you; here it is explicit so it can be checked before paying for a GPU.
 """
+import ctypes
+import gc
+import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 
@@ -13,6 +17,11 @@ from scipy import ndimage
 SIZE = 1024      # what TRELLIS.2 / Hunyuan / Meshy expect
 HI_SIZE = 2048   # detail source for the local painter
 MARGIN = 0.08    # empty border around the subject, as a fraction of the square
+IDLE_UNLOAD = 600  # seconds; a loaded BiRefNet session holds 9-14 GB in the server
+
+_lock = threading.Lock()
+_last_used = 0.0
+_reaper = None
 
 
 @lru_cache(maxsize=2)
@@ -21,9 +30,30 @@ def _session(model):
     return new_session(model)
 
 
+def _reap():
+    while True:
+        time.sleep(60)
+        with _lock:
+            if _session.cache_info().currsize and time.monotonic() - _last_used > IDLE_UNLOAD:
+                _session.cache_clear()
+                gc.collect()
+                # onnxruntime frees into glibc's arenas; trim hands the pages back to the OS.
+                try:
+                    ctypes.CDLL("libc.so.6").malloc_trim(0)
+                except OSError:
+                    pass
+
+
 def cutout(im, model="birefnet-general"):
+    global _last_used, _reaper
     from rembg import remove
-    return remove(im.convert("RGB"), session=_session(model))
+    with _lock:
+        out = remove(im.convert("RGB"), session=_session(model))
+        _last_used = time.monotonic()
+        if _reaper is None:
+            _reaper = threading.Thread(target=_reap, daemon=True)
+            _reaper.start()
+    return out
 
 
 def square(subject, size):
