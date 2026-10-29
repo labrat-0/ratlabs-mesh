@@ -12,7 +12,7 @@ Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigg
 <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
 <a href="#live-trial"><img alt="Live trial" src="https://img.shields.io/badge/status-live_trial-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
 <br>
-<a href="#install"><img alt="Windows" src="https://img.shields.io/badge/Windows-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=windows&logoColor=e8e8e8"></a>
+<a href="#install"><img alt="Windows" src="https://img.shields.io/badge/Windows-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2U4ZThlOCI+PHBhdGggZD0iTTIgMy41bDktMS4zdjkuM0gyek0xMi4yIDJsOS44LTEuNFYxMS41aC05Ljh6TTIgMTIuNWg5djkuM2wtOS0xLjN6TTEyLjIgMTIuNUgyMnYxMC45TDEyLjIgMjJ6Ii8+PC9zdmc+"></a>
 <a href="#install"><img alt="macOS" src="https://img.shields.io/badge/macOS-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=apple&logoColor=e8e8e8"></a>
 <a href="#install"><img alt="Linux" src="https://img.shields.io/badge/Linux-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=linux&logoColor=e8e8e8"></a>
 <a href="#ask-any-ai-watch-it-build"><img alt="MCP: any AI client" src="https://img.shields.io/badge/MCP-any_AI_client-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
