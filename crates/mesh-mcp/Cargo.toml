@@ -1,0 +1,18 @@
+[package]
+name = "mesh-mcp"
+description = "RatLabs Mesh: Model Context Protocol tools so any AI client can drive the studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+reqwest.workspace = true
+mesh-core.workspace = true
+mesh-prep.workspace = true
+mesh-engines.workspace = true
+mesh-blender.workspace = true
+mesh-market.workspace = true
+mesh-pipeline.workspace = true

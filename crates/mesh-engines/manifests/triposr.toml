@@ -1,0 +1,25 @@
+# TripoSR on this CPU. Free and offline, coarse: drafts to check a cut-out and pose.
+id = "triposr"
+label = "TripoSR (local CPU draft)"
+cost = "free"
+multiview = false
+exclusive = true
+setup = "Clone TripoSR into the engines folder with a .venv (see docs/TECHNICAL.md)"
+ready = "{triposr}/.venv/bin/python"
+command = ["{triposr}/.venv/bin/python", "-I", "{sidecars}/triposr_cpu.py", "{image}", "{out}", "--engine", "{triposr}"]
+progress = "triposr {stage}"
+
+[meta]
+host = "local-cpu"
+
+[quality.draft]
+args = ["--resolution", "160"]
+meta = { resolution = 160 }
+
+[quality.standard]
+args = ["--resolution", "224"]
+meta = { resolution = 224 }
+
+[quality.high]
+args = ["--resolution", "288"]
+meta = { resolution = 288 }

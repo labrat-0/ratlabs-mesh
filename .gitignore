@@ -4,3 +4,4 @@ jobs/
 *.blend1
 packages/
 library/
+target/

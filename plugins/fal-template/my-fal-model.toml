@@ -1,0 +1,14 @@
+# Template: any image-to-3D model on fal.ai, no code. Copy to ~/.config/ratlabs-mesh/engines/,
+# set the endpoint, payload and result path from the model's fal.ai API page, and restart the studio.
+id = "my-fal-model"
+type = "fal"
+label = "My fal model (fal.ai)"
+cost = "see fal.ai pricing"
+multiview = false                 # true if the payload takes {back_image_url} etc.
+endpoint = "fal-ai/your-model/image-to-3d"
+result = "model_glb.url|model_mesh.url"   # dotted path(s) to the GLB URL in the response
+
+[payload]
+image_url = "{image_url}"         # the prepared cut-out, uploaded to fal's CDN
+seed = "{seed}"                   # exactly one placeholder: keeps its type (number)
+# back_image_url = "{back_image_url}"   # dropped when no back view was given

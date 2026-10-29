@@ -1,0 +1,20 @@
+[package]
+name = "mesh-prep"
+description = "RatLabs Mesh: turn any picture into a clean, centred subject cut-out"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["cutout"]
+# Background removal with BiRefNet through ONNX Runtime. Without it, art must already be isolated.
+cutout = ["dep:ort"]
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+image.workspace = true
+mesh-core.workspace = true
+reqwest.workspace = true
+ort = { version = "=2.0.0-rc.15", optional = true, default-features = false, features = ["std", "download-binaries", "copy-dylibs", "tls-rustls", "api-24"] }

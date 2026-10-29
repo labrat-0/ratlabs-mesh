@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-python-multipart
-httpx
-gradio_client
-rembg[cpu]
-pillow
-numpy
-scipy

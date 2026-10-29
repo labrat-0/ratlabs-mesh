@@ -1,0 +1,24 @@
+[package]
+name = "mesh-server"
+description = "RatLabs Mesh: the local studio server (API, live events, MCP endpoint, embedded UI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+rust-embed.workspace = true
+mime_guess.workspace = true
+axum = { version = "0.8", features = ["multipart"] }
+tower-http = { version = "0.7", features = ["fs"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+mesh-core.workspace = true
+mesh-prep.workspace = true
+mesh-engines.workspace = true
+mesh-blender.workspace = true
+mesh-market.workspace = true
+mesh-pipeline.workspace = true
+mesh-mcp.workspace = true

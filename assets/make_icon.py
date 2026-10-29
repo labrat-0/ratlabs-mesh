@@ -1,5 +1,5 @@
 """Build the RatLabs Mesh app icon: the RatLabs Studio pixel rat, re-drawn as a
-triangulated wireframe mesh in the studio's mint neon (dots at the vertices).
+triangulated wireframe mesh in the studio's green (dots at the vertices).
 
 python assets/make_icon.py  (RatLabs Mesh venv: numpy, scipy, Pillow)
 """
@@ -13,7 +13,7 @@ from scipy.spatial import Delaunay
 HERE = Path(__file__).resolve().parent
 SRC = Path.home() / ".local/share/icons/hicolor/512x512/apps/ratlabs-studio.png"
 S = 1024
-MINT = (56, 245, 198)
+GREEN = (57, 255, 136)  # the studio accent, #39ff88
 
 src = np.asarray(Image.open(SRC).convert("RGB").resize((S, S), Image.NEAREST)).astype(float)
 grey = src.mean(-1)
@@ -74,10 +74,10 @@ for t in tris:
     for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
         edges.add((min(a, b), max(a, b)))
 for a, b in edges:
-    wd.line([tuple(pts[a]), tuple(pts[b])], fill=MINT + (170,), width=5)
+    wd.line([tuple(pts[a]), tuple(pts[b])], fill=GREEN + (170,), width=5)
 for p in pts[np.unique(np.array(tris).ravel())]:
     r = 9
-    wd.ellipse((p[0] - r, p[1] - r, p[0] + r, p[1] + r), fill=MINT + (255,))
+    wd.ellipse((p[0] - r, p[1] - r, p[0] + r, p[1] + r), fill=GREEN + (255,))
 glow = wire.filter(ImageFilter.GaussianBlur(14))
 glow = Image.fromarray((np.asarray(glow).astype(float) * [1, 1, 1, 0.9]).astype(np.uint8))
 img = Image.alpha_composite(img, glow)
@@ -88,8 +88,8 @@ if eye.any():
     yy, xx = np.nonzero(eye)
     cx, cy, r = xx.mean(), yy.mean(), max(14, (eye.sum() / np.pi) ** 0.5 * 1.1)
     d = ImageDraw.Draw(img)
-    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(4, 6, 8, 255), outline=MINT + (255,), width=4)
-    d.ellipse((cx - r * .35 + 4, cy - r * .35 - 4, cx + r * .05 + 4, cy + r * .05 - 4), fill=MINT + (255,))
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(4, 6, 8, 255), outline=GREEN + (255,), width=4)
+    d.ellipse((cx - r * .35 + 4, cy - r * .35 - 4, cx + r * .05 + 4, cy + r * .05 - 4), fill=GREEN + (255,))
 
 # clip everything to the tile
 mask = Image.new("L", (S, S), 0)

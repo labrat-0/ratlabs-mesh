@@ -13,6 +13,9 @@
   <div class="brand"><img class="logo" src="icon-128.png" alt="" aria-hidden="true"><b>RatLabs</b> Mesh</div>
   <nav class="tabs seg" id="tabs"><button data-tab="studio" class="on">Studio</button><button data-tab="market">Market</button></nav>
   <div id="engineChips" class="chips"></div>
+  <div id="agent" class="agent" hidden></div>
+  <span id="live" class="live off" title="Live updates connecting…"></span>
+  <button id="connectBtn" class="ghost" title="Let any AI assistant drive RatLabs Mesh (MCP)">Connect AI</button>
   <button id="keysBtn" class="ghost">Keys</button>
 </header>
 
@@ -43,6 +46,7 @@
 
     <div id="views" class="views" hidden>
       <label>Extra views <small>(optional, sharper backs)</small></label>
+      <p class="hint">Best results: make the same character from the back, left and right with any free AI image generator, and drop each view here.</p>
       <div class="viewrow">
         <label class="vdrop"><input type="file" data-side="back" accept="image/*" hidden><span>Back</span></label>
         <label class="vdrop"><input type="file" data-side="left" accept="image/*" hidden><span>Left</span></label>
@@ -52,7 +56,7 @@
 
     <div class="grid2">
       <div><label for="quality">Quality</label><select id="quality"><option>draft</option><option selected>standard</option><option>high</option></select></div>
-      <div><label for="variants">Variants</label><select id="variants"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+      <div><label for="variants">Variants</label><select id="variants"><option selected>1</option><option>2</option><option>3</option><option>4</option></select></div>
     </div>
 
     <details>
@@ -149,6 +153,16 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js"></script>
+<dialog id="connectDlg">
+  <form method="dialog">
+    <h2>Connect an AI</h2>
+    <p class="hint">RatLabs Mesh speaks MCP, so any assistant that supports it can generate, refinish, rig and inspect models here while you watch in this window. Endpoint: <code id="connectUrl"></code></p>
+    <div id="connectList" class="connect"></div>
+    <p class="hint">Paid engines bill your own keys; assistants are told to ask before spending.</p>
+    <div class="row"><button value="close" class="primary">Done</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

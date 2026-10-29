@@ -1,0 +1,21 @@
+[package]
+name = "mesh-pipeline"
+description = "RatLabs Mesh: the job pipeline (prep, generate, finish, rig) and its work queue"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["cutout"]
+cutout = ["mesh-prep/cutout"]
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+mesh-core.workspace = true
+reqwest.workspace = true
+zip.workspace = true
+mesh-prep.workspace = true
+mesh-engines.workspace = true
+mesh-blender.workspace = true

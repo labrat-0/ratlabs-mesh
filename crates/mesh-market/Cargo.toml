@@ -1,0 +1,16 @@
+[package]
+name = "mesh-market"
+description = "RatLabs Mesh: search free asset libraries and keep what you grab, with its licence"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+image.workspace = true
+zip.workspace = true
+mesh-core.workspace = true
+mesh-blender.workspace = true

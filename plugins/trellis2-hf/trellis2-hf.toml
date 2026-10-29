@@ -1,0 +1,21 @@
+# TRELLIS.2 on Microsoft's official Hugging Face Space. Needs HF PRO quota: the free tier caps
+# a job well under the ~270 s it asks for. Install: copy this folder into
+# ~/.config/ratlabs-mesh/engines/ (the .toml must sit directly in engines/, next to run.py).
+id = "trellis2-hf"
+label = "TRELLIS.2 (HF Space)"
+cost = "HF GPU quota"
+key = "HF_TOKEN"
+setup = "Needs uv (docs.astral.sh/uv) and an HF_TOKEN with PRO quota under Keys"
+command = ["uv", "run", "--quiet", "--with", "gradio_client", "python", "{plugin}/trellis2_hf.py",
+           "{image}", "{out}", "--seed", "{seed}", "--polys", "{polys}", "--texture", "{texture}"]
+progress = "space: {stage}"
+
+[meta]
+host = "huggingface"
+
+[quality.draft]
+args = ["--resolution", "512"]
+[quality.standard]
+args = ["--resolution", "1024"]
+[quality.high]
+args = ["--resolution", "1536"]

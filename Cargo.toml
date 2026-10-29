@@ -1,0 +1,42 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/labrat-0/ratlabs-mesh"
+authors = ["RatLabs <https://ratlabs.tech>"]
+
+[workspace.dependencies]
+mesh-core = { path = "crates/mesh-core" }
+mesh-engines = { path = "crates/mesh-engines" }
+mesh-prep = { path = "crates/mesh-prep", default-features = false }
+mesh-glb = { path = "crates/mesh-glb" }
+mesh-blender = { path = "crates/mesh-blender" }
+mesh-market = { path = "crates/mesh-market" }
+mesh-pipeline = { path = "crates/mesh-pipeline" }
+mesh-mcp = { path = "crates/mesh-mcp" }
+mesh-server = { path = "crates/mesh-server" }
+
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+toml = "0.9"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+directories = "6"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "net", "signal", "time"] }
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "query", "form", "rustls"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+imageproc = { version = "0.27", default-features = false }
+base64 = "0.22"
+fs2 = "0.4"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+rust-embed = { version = "8", features = ["include-exclude"] }
+mime_guess = "2"
+
+[profile.release]
+lto = "thin"
+strip = true

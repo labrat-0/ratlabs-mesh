@@ -1,0 +1,31 @@
+# Tencent Hunyuan3D-2 shape + paint on this CPU. Free, offline, minutes per model.
+# Hunyuan 3D 2.0 Community License: not licensed in the EU, UK or South Korea.
+id = "hunyuan-local"
+label = "Hunyuan3D-2 (local CPU)"
+cost = "free, ~25 min on a CPU"
+multiview = true
+exclusive = true
+setup = "ratmesh setup hunyuan   (~22 GB download, ~16 GB RAM while generating)"
+ready = "{hunyuan}/.venv/bin/python"
+command = ["{hunyuan}/.venv/bin/python", "-I", "{sidecars}/hunyuan_local.py", "{image}", "{out}",
+           "--engine", "{hunyuan}", "--faces", "{polys}", "--seed", "{seed}"]
+view_args = ["--{side}", "{path}"]
+keep_lighting_args = ["--keep-lighting"]
+detail_args = ["--detail-source", "{path}"]
+progress = "hunyuan {stage} ({t}s)"
+
+[meta]
+host = "local-cpu"
+
+# The 1.1B model at 320 keeps fur strands and whiskers the 0.6B mini loses, at about the same CPU time.
+[quality.draft]
+args = ["--model", "mini", "--octree", "256"]
+meta = { model = "mini", octree = 256 }
+
+[quality.standard]
+args = ["--model", "full", "--octree", "320"]
+meta = { model = "full", octree = 320 }
+
+[quality.high]
+args = ["--model", "full", "--octree", "380"]
+meta = { model = "full", octree = 380 }
