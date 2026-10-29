@@ -1,0 +1,16 @@
+name: Idea or request
+description: Something RatLabs Mesh should do (better)
+labels: ["idea", "trial"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: The problem you hit or the thing you want to make, and how you'd like it to work.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Your engine, game engine, AI client, examples from other tools...

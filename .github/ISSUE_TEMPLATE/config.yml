@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or show-and-tell
+    url: https://github.com/labrat-0/ratlabs-mesh/discussions
+    about: Ask how to do something, or share what you made with RatLabs Mesh.
+  - name: Security problem
+    url: https://github.com/labrat-0/ratlabs-mesh/security/advisories/new
+    about: Report vulnerabilities privately, please, not as a public issue.

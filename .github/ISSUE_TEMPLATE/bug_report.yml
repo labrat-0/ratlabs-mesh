@@ -1,0 +1,84 @@
+name: Bug report
+description: Something broke or didn't work as expected during the live trial
+labels: ["bug", "trial"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying RatLabs Mesh during the live trial! A few details let us reproduce it quickly.
+        **Don't paste API keys** (fal.ai, Meshy, ...) anywhere in this form.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Screenshots help.
+      placeholder: I dropped character art in, picked Hunyuan3D v3, and the job failed at "finish" with ...
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux (x86_64)
+        - Linux (ARM64)
+        - macOS (Apple Silicon)
+        - Windows 10 / 11
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: RatLabs Mesh version
+      description: Output of `ratmesh --version`
+      placeholder: ratmesh 0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      multiple: true
+      options:
+        - Installing
+        - Studio (browser UI)
+        - Cut-out / generation
+        - Finishing / renders (Blender)
+        - Rig + animate
+        - Market / starter pack
+        - AI client over MCP
+        - Command line
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine (if generating)
+      options:
+        - Not generating
+        - Hunyuan3D v3 (fal.ai)
+        - TRELLIS.2 (fal.ai)
+        - Meshy
+        - Hunyuan3D-2 local
+        - TripoSR local
+        - A plugin engine
+  - type: input
+    id: client
+    attributes:
+      label: AI client (if using one)
+      placeholder: Claude Code, Grok Build, Cursor, Codex CLI, ...
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `ratmesh doctor`
+      description: Shows Blender, engines and folders. It never prints your keys.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Job log (if a job failed)
+      description: The log box under the 3D viewer, or `job.log` in the job's folder.
+      render: text

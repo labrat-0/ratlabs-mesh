@@ -10,6 +10,7 @@ Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigg
 <a href="https://github.com/labrat-0/ratlabs-mesh/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/labrat-0/ratlabs-mesh/ci.yml?branch=main&style=for-the-badge&labelColor=0e0e0e&label=CI"></a>
 <a href="https://github.com/labrat-0/ratlabs-mesh/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/labrat-0/ratlabs-mesh/total?style=for-the-badge&labelColor=0e0e0e&color=e8e8e8"></a>
 <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
+<a href="#live-trial"><img alt="Live trial" src="https://img.shields.io/badge/status-live_trial-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
 <br>
 <a href="#install"><img alt="Windows" src="https://img.shields.io/badge/Windows-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=windows&logoColor=e8e8e8"></a>
 <a href="#install"><img alt="macOS" src="https://img.shields.io/badge/macOS-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=apple&logoColor=e8e8e8"></a>
@@ -30,6 +31,14 @@ Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigg
 <a href="#first-steps"><b>First steps</b></a> ·
 <a href="docs/TECHNICAL.md"><b>How it works</b></a>
 </p>
+
+<a id="live-trial"></a>
+
+> [!NOTE]
+> **Live trial (v0.2).** RatLabs Mesh is out in the open so you can try it early: expect some rough edges.
+> When something breaks or you have an idea, [open an issue](https://github.com/labrat-0/ratlabs-mesh/issues/new/choose)
+> (the form asks for exactly what we need) or join the [Discussions](https://github.com/labrat-0/ratlabs-mesh/discussions).
+> We read everything and work through it in upcoming releases.
 
 ---
 
