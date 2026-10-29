@@ -87,7 +87,7 @@ and a **Refinish** panel that re-sizes, re-budgets or turns the model around for
 
 | Texture | Clay | Wire |
 |---|---|---|
-| ![The textured Labrat](docs/screenshots/labrat-texture.png) | ![The same Labrat in clay shading](docs/screenshots/labrat-clay.png) | ![The same Labrat as a green wireframe](docs/screenshots/labrat-wire.png) |
+| ![The textured Labrat from Rat Underground](docs/screenshots/labrat-texture.png) | ![The same Labrat in clay shading](docs/screenshots/labrat-clay.png) | ![The same Labrat as a green wireframe](docs/screenshots/labrat-wire.png) |
 
 Clay mode shows the real shape without the paint. Wire mode shows the topology you're shipping. Flip
 between **Studio** and **Neon** lighting to see how it holds up in a dark scene.
