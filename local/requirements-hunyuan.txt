@@ -1,4 +1,7 @@
 # Tested 2026-10-16 on CPU. transformers 5 renames DINOv2 weights and breaks the shape checkpoint.
+# Known advisories in transformers 4.57 / diffusers 0.35 concern loading untrusted Hub models or
+# remote code. This engine only loads Tencent's Hunyuan3D-2 weights and its own bundled pipeline,
+# so they don't apply; move both forward once Hunyuan3D-2 runs on transformers 5 / diffusers 0.38.
 torch==2.14.1
 torchvision==0.29.1
 diffusers==0.35.2
@@ -16,5 +19,5 @@ scikit-image==0.26.0
 huggingface_hub==0.36.2
 pybind11==3.1.0
 ninja==1.13.2
-setuptools==78.1.0
+setuptools==84.1.0
 wheel
