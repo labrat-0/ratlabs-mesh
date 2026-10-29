@@ -27,8 +27,10 @@ try {
         $Base = if ($env:RATMESH_VERSION) { "https://github.com/$Repo/releases/download/$env:RATMESH_VERSION" } else { "https://github.com/$Repo/releases/latest/download" }
         Say "Downloading RatLabs Mesh for Windows"
         Invoke-WebRequest -UseBasicParsing "$Base/$Name.zip" -OutFile $Zip
-        $Sums = (Invoke-WebRequest -UseBasicParsing "$Base/SHA256SUMS").Content
-        $Want = ($Sums -split "`n" | Where-Object { $_ -match " $Name\.zip$" }) -replace " .*", ""
+        # Saved to a file and read as text: GitHub serves release assets as binary, so .Content would be bytes.
+        $SumsFile = Join-Path $Tmp "SHA256SUMS"
+        Invoke-WebRequest -UseBasicParsing "$Base/SHA256SUMS" -OutFile $SumsFile
+        $Want = (Get-Content $SumsFile | Where-Object { $_ -match " $Name\.zip$" }) -replace " .*", ""
         $Got = (Get-FileHash $Zip -Algorithm SHA256).Hash.ToLower()
         if (-not $Want -or $Want.Trim() -ne $Got) { throw "checksum mismatch for $Name.zip" }
         Say "Checksum OK"
