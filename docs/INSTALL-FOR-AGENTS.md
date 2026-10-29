@@ -17,7 +17,9 @@ curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.
 ```
 
 Installs `~/.local/bin/ratmesh` and a **RatLabs Mesh** entry in the app launcher (with a background
-service). If Blender is missing, offer the command for their distro: `sudo apt install blender`,
+service). The prebuilt binary needs glibc 2.39+ (Ubuntu 24.04, Debian 13, Fedora 40 or newer); on older
+distros the installer says so: build from source with
+`cargo install --git https://github.com/labrat-0/ratlabs-mesh ratmesh` (needs Rust and a C++ compiler). If Blender is missing, offer the command for their distro: `sudo apt install blender`,
 `sudo dnf install blender`, `sudo pacman -S blender`, or `flatpak install flathub org.blender.Blender`.
 If `~/.local/bin` isn't on PATH, call it by full path or offer to add it.
 

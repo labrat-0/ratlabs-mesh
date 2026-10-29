@@ -29,6 +29,12 @@ case "$(uname -m)" in
   *) die "unsupported CPU $(uname -m)" ;;
 esac
 [ "$os" = apple-darwin ] && [ "$arch" = x86_64 ] && die "Intel Macs: build from source with \`cargo install --git https://github.com/$REPO ratmesh\`"
+if [ "$os" = unknown-linux-gnu ]; then
+  glibc="$(ldd --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+$' || true)"
+  if [ -n "$glibc" ] && [ "$(printf '%s\n2.39\n' "$glibc" | sort -V | head -1)" != 2.39 ]; then
+    die "the prebuilt Linux binary needs glibc 2.39+ (Ubuntu 24.04, Debian 13, Fedora 40 or newer); you have $glibc. Build from source instead: cargo install --git https://github.com/$REPO ratmesh"
+  fi
+fi
 target="$arch-$os"
 name="ratmesh-$target"
 

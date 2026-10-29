@@ -40,7 +40,7 @@ tells you how to get it). Pick your system, then either run the command yourself
 hand it to your AI agent** (Claude Code, Codex, Cursor, Gemini CLI, Grok...).
 
 <details open>
-<summary><b>Linux</b>: x86_64 and ARM64</summary>
+<summary><b>Linux</b>: x86_64 and ARM64 · Ubuntu 24.04, Debian 13, Fedora 40 or newer</summary>
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.sh | sh
@@ -133,7 +133,7 @@ https://github.com/labrat-0/ratlabs-mesh/blob/main/docs/INSTALL-FOR-AGENTS.md
 </details>
 
 <details>
-<summary><b>From source</b>: any system with Rust 1.85+</summary>
+<summary><b>From source</b>: any system with Rust 1.85+, including older Linux distros</summary>
 
 ```sh
 cargo install --git https://github.com/labrat-0/ratlabs-mesh ratmesh
