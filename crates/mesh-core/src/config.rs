@@ -56,6 +56,33 @@ pub fn expand(p: impl AsRef<Path>) -> PathBuf {
 }
 
 /// The first candidate that exists, else the first one.
+/// `blender` on PATH, else where the official installers put it (Windows and macOS don't add
+/// Blender to PATH). The newest installed version wins.
+fn find_blender() -> String {
+    let exe = if cfg!(windows) { "blender.exe" } else { "blender" };
+    let on_path = std::env::var_os("PATH").is_some_and(|p| std::env::split_paths(&p).any(|d| d.join(exe).is_file()));
+    if on_path {
+        return "blender".into();
+    }
+    let mut found: Vec<PathBuf> = vec![];
+    if cfg!(target_os = "macos") {
+        found.push(PathBuf::from("/Applications/Blender.app/Contents/MacOS/Blender"));
+        found.push(home().join("Applications/Blender.app/Contents/MacOS/Blender"));
+    }
+    if cfg!(windows) {
+        for root in [std::env::var_os("ProgramFiles"), std::env::var_os("LOCALAPPDATA").map(|l| PathBuf::from(l).join("Programs").into_os_string())]
+            .into_iter()
+            .flatten()
+        {
+            let base = PathBuf::from(root).join("Blender Foundation");
+            let mut versions: Vec<PathBuf> = std::fs::read_dir(&base).map(|rd| rd.flatten().map(|e| e.path().join(exe)).collect()).unwrap_or_default();
+            versions.sort();
+            found.extend(versions.into_iter().rev());
+        }
+    }
+    found.into_iter().find(|p| p.is_file()).map(|p| p.display().to_string()).unwrap_or_else(|| "blender".into())
+}
+
 fn first_existing(cands: &[PathBuf]) -> PathBuf {
     cands.iter().find(|p| p.exists()).unwrap_or(&cands[0]).clone()
 }
@@ -78,7 +105,7 @@ impl Config {
             runtime: data_dir.join("runtime"),
             keys_file: config_dir.join("keys.env"),
             plugins: config_dir.join("engines"),
-            blender: std::env::var("RATMESH_BLENDER").ok().or(file.blender).unwrap_or_else(|| "blender".into()),
+            blender: std::env::var("RATMESH_BLENDER").ok().filter(|s| !s.is_empty()).or(file.blender).unwrap_or_else(find_blender),
             hunyuan: pick("RATMESH_HUNYUAN", file.hunyuan, first_existing(&[data_dir.join("engines/Hunyuan3D-2"), tools.join("Hunyuan3D-2")])),
             triposr: pick("RATMESH_TRIPOSR", file.triposr, first_existing(&[data_dir.join("engines/TripoSR"), tools.join("TripoSR")])),
             anim: pick("RATMESH_ANIM", file.anim, first_existing(&[data_dir.join("anim"), tools.join("anim")])),

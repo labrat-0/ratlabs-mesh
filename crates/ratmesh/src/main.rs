@@ -61,6 +61,8 @@ enum Cmd {
     },
     /// Speak MCP over stdio for AI clients; starts the studio if it isn't running
     Mcp,
+    /// Open the studio in your browser, starting it in the background if needed
+    Open,
     /// Generate from an image
     Make {
         image: PathBuf,
@@ -231,6 +233,22 @@ fn run(cli: Cli) -> Result<()> {
             tokio::runtime::Runtime::new()?.block_on(mesh_server::serve(config().port))
         }
         Cmd::Mcp => mcp_stdio::run(),
+        Cmd::Open => {
+            mcp_stdio::ensure_server()?;
+            let url = config().url();
+            let opener: &[&str] = if cfg!(windows) {
+                &["cmd", "/C", "start", ""]
+            } else if cfg!(target_os = "macos") {
+                &["open"]
+            } else {
+                &["xdg-open"]
+            };
+            let ok = std::process::Command::new(opener[0]).args(&opener[1..]).arg(&url).status().is_ok_and(|s| s.success());
+            if !ok {
+                println!("RatLabs Mesh is running: open {url} in your browser");
+            }
+            Ok(())
+        }
         Cmd::Make { image, shape, engine, variants, quality, crop, back, left, right, pose, no_pbr, keep_background, keep_lighting, seed } => {
             if mesh_engines::get(&engine).is_none() {
                 bail!("unknown engine {engine}; see `ratmesh engines`");

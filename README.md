@@ -6,23 +6,143 @@
 Cut-out, 3D generation, cleanup, real-world sizing, review renders and auto-rigging in one local studio.</p>
 
 <p align="center">
-<a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-39ff88?style=flat-square&labelColor=0e0e0e"></a>
-<img alt="Linux, macOS, Windows" src="https://img.shields.io/badge/runs_on-Linux_·_macOS_·_Windows-e8e8e8?style=flat-square&labelColor=0e0e0e">
-<a href="https://modelcontextprotocol.io"><img alt="MCP server" src="https://img.shields.io/badge/MCP-any_AI_client-39ff88?style=flat-square&labelColor=0e0e0e"></a>
-<img alt="One binary" src="https://img.shields.io/badge/one_binary-Rust-e8e8e8?style=flat-square&labelColor=0e0e0e">
+<a href="https://github.com/labrat-0/ratlabs-mesh/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/labrat-0/ratlabs-mesh?style=for-the-badge&labelColor=0e0e0e&color=39ff88&label=release"></a>
+<a href="https://github.com/labrat-0/ratlabs-mesh/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/labrat-0/ratlabs-mesh/ci.yml?branch=main&style=for-the-badge&labelColor=0e0e0e&label=CI"></a>
+<a href="https://github.com/labrat-0/ratlabs-mesh/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/labrat-0/ratlabs-mesh/total?style=for-the-badge&labelColor=0e0e0e&color=e8e8e8"></a>
+<a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
+<br>
+<a href="#install"><img alt="Windows" src="https://img.shields.io/badge/Windows-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=windows&logoColor=e8e8e8"></a>
+<a href="#install"><img alt="macOS" src="https://img.shields.io/badge/macOS-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=apple&logoColor=e8e8e8"></a>
+<a href="#install"><img alt="Linux" src="https://img.shields.io/badge/Linux-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=linux&logoColor=e8e8e8"></a>
+<a href="#ask-any-ai-watch-it-build"><img alt="MCP: any AI client" src="https://img.shields.io/badge/MCP-any_AI_client-39ff88?style=for-the-badge&labelColor=0e0e0e"></a>
+<a href="crates"><img alt="Built with Rust" src="https://img.shields.io/badge/built_with-Rust-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=rust&logoColor=e8e8e8"></a>
+<a href="https://www.blender.org"><img alt="Finishing in Blender" src="https://img.shields.io/badge/finishing-Blender-e8e8e8?style=for-the-badge&labelColor=0e0e0e&logo=blender&logoColor=e8e8e8"></a>
 </p>
 
 <p align="center"><img src="docs/media/ai-demo.gif" alt="Claude Code drives RatLabs Mesh: it checks the cut-out of a labrat drawing, generates a 3D model with Hunyuan3D, and the studio shows it in clay mode under neon light while Claude critiques the result"></p>
-<p align="center"><sub>Claude Code turning one drawing into a 30k-triangle, 1.7 m character in about four minutes, while the studio follows along. Real time, the generation wait sped up.</sub></p>
+<p align="center"><sub>Claude Code turning one drawing into a 30k-triangle, 1.7 m character in about four minutes, while the studio follows along. The generation wait is sped up.</sub></p>
 
-```sh
-tar xzf ratmesh-*-linux-gnu.tar.gz          # from the Releases page
-./ratmesh-*/ratmesh install-desktop         # then open "RatLabs Mesh" from your launcher
-```
-
-<p align="center"><a href="#get-started">Get started</a> · <a href="#ask-any-ai-watch-it-build">Connect your AI</a> · <a href="docs/TECHNICAL.md">How it works</a></p>
+<p align="center">
+<a href="#install"><b>Install</b></a> ·
+<a href="#ask-any-ai-watch-it-build"><b>Ask any AI</b></a> ·
+<a href="#the-studio"><b>The studio</b></a> ·
+<a href="#pick-your-engine"><b>Engines</b></a> ·
+<a href="#first-steps"><b>First steps</b></a> ·
+<a href="docs/TECHNICAL.md"><b>How it works</b></a>
+</p>
 
 ---
+
+## Install
+
+One binary with the studio built in. You also need [Blender](https://www.blender.org) 4.2+ (the installer
+tells you how to get it). Pick your system, then either run the command yourself or **copy the prompt and
+hand it to your AI agent** (Claude Code, Codex, Cursor, Gemini CLI, Grok...).
+
+<details open>
+<summary><b>Linux</b>: x86_64 and ARM64</summary>
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.sh | sh
+```
+
+Adds **RatLabs Mesh** to your app launcher, with a background service. Hand this to your AI agent instead:
+
+```text
+Install RatLabs Mesh on this Linux machine and connect yourself to it.
+Project: https://github.com/labrat-0/ratlabs-mesh
+
+1. Run the installer:
+   curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.sh | sh
+2. If it says Blender is missing, ask me first, then install it:
+   the Blender package for my distro (apt, dnf, pacman or flatpak)
+3. Run `ratmesh doctor` and tell me what is still missing.
+4. Add RatLabs Mesh to yourself as an MCP server. `ratmesh connect` prints
+   the setup for every client. Claude Code:
+   claude mcp add -s user --transport http ratlabs-mesh http://127.0.0.1:8771/mcp
+   Tell me if I need to restart you to load it.
+5. Run `ratmesh open` so I can see the studio, then call mesh_status and
+   tell me which engines are ready.
+
+Don't install anything else without asking, and never start a paid
+generation during setup. Full guide:
+https://github.com/labrat-0/ratlabs-mesh/blob/main/docs/INSTALL-FOR-AGENTS.md
+```
+</details>
+
+<details>
+<summary><b>macOS</b>: Apple Silicon</summary>
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.sh | sh
+```
+
+Then `ratmesh open`. Hand this to your AI agent instead:
+
+```text
+Install RatLabs Mesh on this Mac and connect yourself to it.
+Project: https://github.com/labrat-0/ratlabs-mesh
+
+1. Run the installer:
+   curl -fsSL https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.sh | sh
+2. If it says Blender is missing, ask me first, then install it:
+   brew install --cask blender
+3. Run `ratmesh doctor` and tell me what is still missing.
+4. Add RatLabs Mesh to yourself as an MCP server. `ratmesh connect` prints
+   the setup for every client. Claude Code:
+   claude mcp add -s user --transport http ratlabs-mesh http://127.0.0.1:8771/mcp
+   Tell me if I need to restart you to load it.
+5. Run `ratmesh open` so I can see the studio, then call mesh_status and
+   tell me which engines are ready.
+
+Don't install anything else without asking, and never start a paid
+generation during setup. Full guide:
+https://github.com/labrat-0/ratlabs-mesh/blob/main/docs/INSTALL-FOR-AGENTS.md
+```
+</details>
+
+<details>
+<summary><b>Windows</b>: 10 and 11</summary>
+
+```powershell
+irm https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.ps1 | iex
+```
+
+Adds **RatLabs Mesh** to the Start menu and `ratmesh` to your PATH. Hand this to your AI agent instead:
+
+```text
+Install RatLabs Mesh on this Windows PC (use PowerShell) and connect yourself to it.
+Project: https://github.com/labrat-0/ratlabs-mesh
+
+1. Run the installer:
+   irm https://raw.githubusercontent.com/labrat-0/ratlabs-mesh/main/install.ps1 | iex
+2. If it says Blender is missing, ask me first, then install it:
+   winget install BlenderFoundation.Blender
+3. Run `ratmesh doctor` and tell me what is still missing.
+4. Add RatLabs Mesh to yourself as an MCP server. `ratmesh connect` prints
+   the setup for every client. Claude Code:
+   claude mcp add -s user --transport http ratlabs-mesh http://127.0.0.1:8771/mcp
+   Tell me if I need to restart you to load it.
+5. Run `ratmesh open` so I can see the studio, then call mesh_status and
+   tell me which engines are ready.
+
+Don't install anything else without asking, and never start a paid
+generation during setup. Full guide:
+https://github.com/labrat-0/ratlabs-mesh/blob/main/docs/INSTALL-FOR-AGENTS.md
+```
+</details>
+
+<details>
+<summary><b>From source</b>: any system with Rust 1.85+</summary>
+
+```sh
+cargo install --git https://github.com/labrat-0/ratlabs-mesh ratmesh
+```
+</details>
+
+Every installer checks the download against the release's `SHA256SUMS` and installs nothing else.
+`ratmesh doctor` shows what's ready, and `ratmesh open` starts the studio. The downloads are also on the
+[Releases](https://github.com/labrat-0/ratlabs-mesh/releases/latest) page.
 
 ## Ask any AI. Watch it build.
 
@@ -125,32 +245,15 @@ engines get only the prepared cut-out of your art; the local engine sends nothin
 
 ---
 
-## Get started
-
-**You need:** [Blender](https://www.blender.org) 4.2 or newer. That's it: RatLabs Mesh is one binary with
-the studio built in.
-
-**Linux:** download `ratmesh-<version>-x86_64-unknown-linux-gnu.tar.gz` from the Releases page, then
-
-```sh
-tar xzf ratmesh-*-linux-gnu.tar.gz
-./ratmesh-*/ratmesh install-desktop     # installs to ~/.local/bin, adds the launcher entry + background service
-```
-
-Open **RatLabs Mesh** from your app launcher. `ratmesh doctor` checks everything and says how to fix
-what's missing; `ratmesh install-desktop --uninstall` removes the app (your models stay).
-
-**macOS / Windows:** download the archive for your system and run `ratmesh serve`, then open
-http://127.0.0.1:8771.
-
-**From source** (Rust 1.85+): `cargo install --git https://github.com/labrat-0/ratlabs-mesh ratmesh`.
+## First steps
 
 New library? Press **Load starter pack** to add 30 free CC0 props (lab gear, tools, lamps, pipes, crates)
 and the **Labrat** from *Rat Underground*, rigged with its game animations. The props are free for
 anything; the Labrat is ours, for trying in the studio only.
 
 The first cut-out downloads the BiRefNet background-removal model (~970 MB, once; `ratmesh setup cutout`
-fetches it ahead of time).
+fetches it ahead of time). `ratmesh install-desktop --uninstall` removes the Linux launcher entry; your
+models stay.
 
 ### Add an engine
 

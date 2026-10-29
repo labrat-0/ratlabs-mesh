@@ -36,6 +36,13 @@ pub fn ensure_server() -> Result<()> {
         use std::os::unix::process::CommandExt;
         cmd.process_group(0); // outlive the AI client's process group
     }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        const DETACHED_PROCESS: u32 = 0x0000_0008;
+        cmd.creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS); // no console window, outlives the caller
+    }
     cmd.spawn()?;
     let t = Instant::now();
     while t.elapsed() < Duration::from_secs(20) {

@@ -136,7 +136,7 @@ pub fn doctor() -> Result<()> {
         line(ready, id, &detail);
     }
     if !any {
-        println!("  No engine is ready yet. The quickest start: add a fal.ai key with `ratmesh serve` > Keys.");
+        println!("  No engine is ready yet. The quickest start: `ratmesh open`, then Keys, and paste a fal.ai key.");
     }
 
     println!("\nFolders");
@@ -158,6 +158,6 @@ pub fn doctor() -> Result<()> {
         .send()
         .is_ok_and(|r| r.status().is_success());
     println!("\nStudio");
-    line(studio, "Running", &if studio { format!("{}  (MCP: {}mcp)", c.url(), c.url()) } else { "not running: `ratmesh serve`".into() });
+    line(studio, "Running", &if studio { format!("{}  (MCP: {}mcp)", c.url(), c.url()) } else { "not running: `ratmesh open` starts it".into() });
     Ok(())
 }

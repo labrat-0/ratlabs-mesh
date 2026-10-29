@@ -1,4 +1,6 @@
 # Tag v* to publish binaries to a GitHub Release.
+# Archives are versionless (ratmesh-<target>.tar.gz / .zip) so
+# https://github.com/labrat-0/ratlabs-mesh/releases/latest/download/<name> always points at the newest.
 name: Release
 on:
   push:
@@ -31,9 +33,9 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          name=ratmesh-${GITHUB_REF_NAME}-${{ matrix.target }}
+          name=ratmesh-${{ matrix.target }}
           mkdir "$name"
-          cp README.md "$name/"
+          cp README.md LICENSE ART-LICENSE.md "$name/"
           if [ "${{ runner.os }}" = Windows ]; then
             cp target/${{ matrix.target }}/release/ratmesh.exe "$name/"
             7z a "$name.zip" "$name" >/dev/null
@@ -41,7 +43,22 @@ jobs:
             cp target/${{ matrix.target }}/release/ratmesh "$name/"
             tar czf "$name.tar.gz" "$name"
           fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ratmesh-${{ matrix.target }}.*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - run: sha256sum ratmesh-* > SHA256SUMS && cat SHA256SUMS
       - uses: softprops/action-gh-release@v2
         with:
-          files: ratmesh-*.*
+          files: |
+            ratmesh-*
+            SHA256SUMS
           generate_release_notes: true
