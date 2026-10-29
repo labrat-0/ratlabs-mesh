@@ -1,0 +1,65 @@
+# Install the published release exactly as users do, on clean Windows, macOS and Linux machines,
+# then start the studio and check the MCP endpoint answers with every tool.
+# Runs after each release, weekly, and by hand (Actions > Install test > Run workflow).
+name: Install test
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MCP_INIT: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"install-test"}}}'
+  MCP_TOOLS: '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+jobs:
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Install (same script as the README one-liner)
+        run: RATMESH_NO_DESKTOP=1 sh install.sh
+      - name: Start the studio and talk MCP to it
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          ratmesh --version
+          ratmesh open
+          curl -fsS http://127.0.0.1:8771/api/config > /dev/null
+          curl -fsS -H 'Content-Type: application/json' -d "$MCP_INIT" http://127.0.0.1:8771/mcp | grep -q '"ratlabs-mesh"'
+          n=$(curl -fsS -H 'Content-Type: application/json' -d "$MCP_TOOLS" http://127.0.0.1:8771/mcp | grep -o '"inputSchema"' | wc -l)
+          echo "MCP tools: $n"
+          [ "$n" -ge 17 ]
+          ratmesh doctor
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Install (same script as the README one-liner)
+        shell: pwsh
+        run: ./install.ps1
+      - name: Check PATH, Start menu, studio and MCP
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:LOCALAPPDATA "Programs\RatLabs Mesh\ratmesh.exe"
+          if (-not (Test-Path $exe)) { throw "ratmesh.exe not installed" }
+          if (-not ([Environment]::GetEnvironmentVariable("Path", "User") -split ";" | Where-Object { $_ -like "*RatLabs Mesh*" })) { throw "not on the user PATH" }
+          $lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "RatLabs Mesh.lnk"
+          if (-not (Test-Path $lnk)) { throw "no Start menu shortcut" }
+          & $exe --version
+          & $exe open
+          Invoke-RestMethod http://127.0.0.1:8771/api/config | Out-Null
+          $init = Invoke-RestMethod -Method Post -ContentType "application/json" -Body $env:MCP_INIT http://127.0.0.1:8771/mcp
+          if ($init.result.serverInfo.name -ne "ratlabs-mesh") { throw "MCP initialize failed" }
+          $tools = (Invoke-RestMethod -Method Post -ContentType "application/json" -Body $env:MCP_TOOLS http://127.0.0.1:8771/mcp).result.tools
+          Write-Host "MCP tools: $($tools.Count)"
+          if ($tools.Count -lt 17) { throw "expected 17 tools" }
+          & $exe doctor
